@@ -1,0 +1,52 @@
+name: Build arm64 macOS package
+
+on:
+  push:
+    branches:
+      - codex/issue-52-arm64-package
+  pull_request:
+    paths:
+      - ".github/workflows/build-arm64-package.yml"
+      - "Makefile"
+      - "Resources/**"
+      - "Sources/CodexUsageWidget/**"
+      - "scripts/package-dmg.sh"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-arm64:
+    runs-on: macos-14
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check memory risks
+        run: make memory-risk-check
+
+      - name: Build arm64 DMG and checksum
+        run: make checksum-arm64
+
+      - name: Verify arm64 DMG
+        shell: bash
+        run: |
+          set -euo pipefail
+          dmg="dist/codexU-$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' Resources/Info.plist)-mac-arm64.dmg"
+          shasum -a 256 -c "${dmg}.sha256"
+          hdiutil verify "$dmg"
+          mount_dir="$(mktemp -d)"
+          trap 'hdiutil detach "$mount_dir" >/dev/null 2>&1 || true; rmdir "$mount_dir" 2>/dev/null || true' EXIT
+          hdiutil attach -nobrowse -readonly -mountpoint "$mount_dir" "$dmg" >/dev/null
+          file "$mount_dir/codexU.app/Contents/MacOS/codexU" | grep -q 'arm64'
+          codesign --verify --deep --strict "$mount_dir/codexU.app"
+
+      - name: Upload arm64 package
+        uses: actions/upload-artifact@v4
+        with:
+          name: codexU-arm64
+          path: |
+            dist/codexU-*-mac-arm64.dmg
+            dist/codexU-*-mac-arm64.dmg.sha256
+          if-no-files-found: error
