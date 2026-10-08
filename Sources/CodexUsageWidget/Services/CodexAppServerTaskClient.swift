@@ -449,7 +449,7 @@ final class CodexAppServerTaskClient: CodexTaskEventClient {
     private func resolveCodexExecutableURL() -> URL? {
         var candidates: [URL] = []
         if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.openai.codex") {
-            candidates.append(appURL.appendingPathComponent("Contents/Resources/codex"))
+            candidates.append(appURL.appendingPathComponent("Contents/Resources/codex-cli/bin/codex"))
         }
         candidates.append(contentsOf: [
             URL(fileURLWithPath: "/Applications/ChatGPT.app/Contents/Resources/codex"),
