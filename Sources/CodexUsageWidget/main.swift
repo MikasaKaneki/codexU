@@ -3322,7 +3322,7 @@ final class CodexUsageReader {
         if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.openai.codex") {
             candidates.append(
                 appURL
-                    .appendingPathComponent("Contents/Resources/codex")
+                    .appendingPathComponent("Contents/Resources/codex-cli/bin/codex")
                     .path
             )
         }
