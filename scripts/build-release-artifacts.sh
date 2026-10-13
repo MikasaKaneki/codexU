@@ -18,11 +18,14 @@ git diff --check
 
 make test-macos-compatibility
 make build >/dev/null
+python3 scripts/check-macos-local-readers.py
 CODEXU_SKIP_BUILD=1 ./scripts/test-history-index.sh
 build/codexU.app/Contents/MacOS/codexU --self-test-statistics-time-zone
 build/codexU.app/Contents/MacOS/codexU --self-test-token-counter
 build/codexU.app/Contents/MacOS/codexU --self-test-app-server-pipe
 build/codexU.app/Contents/MacOS/codexU --self-test-claude-skill-paths
+build/codexU.app/Contents/MacOS/codexU --self-test-model-pricing
+build/codexU.app/Contents/MacOS/codexU --self-test-runtime-fast-sources
 build/codexU.app/Contents/MacOS/codexU --self-test-status-item
 build/codexU.app/Contents/MacOS/codexU --self-test-rate-limits
 build/codexU.app/Contents/MacOS/codexU --self-test-particle-animation

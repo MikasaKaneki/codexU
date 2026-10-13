@@ -128,6 +128,8 @@ require_literal Sources/CodexUsageWidget/Services/UsageIndexMaintenance.swift \
   'LIMIT 256' '历史报告回收缺少单批行数边界'
 require_literal scripts/build-release-artifacts.sh \
   'CODEXU_SKIP_BUILD=1 ./scripts/test-history-index.sh' '发布包装没有运行历史索引及首页回归'
+require_literal scripts/build-release-artifacts.sh \
+  'python3 scripts/check-macos-local-readers.py' '发布包装没有验证 Claude 大文件完整读取及实际内存峰值'
 
 if ! git diff --check >/dev/null; then
   fail 'git diff --check 未通过'
