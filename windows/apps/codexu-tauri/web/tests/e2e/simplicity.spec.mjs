@@ -28,8 +28,8 @@ for (const language of ['en', 'zh-Hans']) {
         const quota = page.locator('.dashboard-home-quota');
         await expect(quota.getByRole('meter')).toHaveCount(3);
         for (const meter of await quota.getByRole('meter').all()) await expect(meter).toBeInViewport();
-        await expect(quota).toContainText(language === 'en' ? '0% used' : '已用 0%');
-        await expect(quota).toContainText(language === 'en' ? 'Resets' : '重置');
+        await expect(quota.getByRole('meter').first()).toHaveAttribute('aria-valuetext', language === 'en' ? '100% remaining' : '剩余 100%');
+        await expect(quota.locator('.quota-overview-reset').first()).toHaveAttribute('title', language === 'en' ? /Resets/ : /重置/);
         await expect(quota).not.toContainText(language === 'en' ? 'Only confirmed' : '这里只显示');
         await expect(quota.locator('.quota-overview-state')).toHaveCount(0);
         const badge = quota.locator('.dashboard-overview-status');

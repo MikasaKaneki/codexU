@@ -174,6 +174,8 @@ const en = {
   },
   quota: {
     title: 'Quota',
+    remainingTitle: 'Remaining',
+    remaining: '{value}% remaining',
     fiveHour: '5h',
     sevenDay: '7d',
     monthly: 'Monthly',
@@ -470,6 +472,8 @@ const zhHans: MessageShape<typeof en> = {
   },
   quota: {
     title: '额度',
+    remainingTitle: '剩余额度',
+    remaining: '剩余 {value}%',
     fiveHour: '5 小时',
     sevenDay: '7 天',
     monthly: '月度',

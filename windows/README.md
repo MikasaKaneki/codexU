@@ -5,6 +5,7 @@
 - Rust reader 读取本机 Codex transcript、`state_5.sqlite` 和 automation 元数据
 - Tauri IPC、额度状态、用量、推理性能、任务、项目、Skills 和 AI Leadership Dashboard
 - 中英文设置、Light/Dark/System 外观和六套语义 palette catalog
+- 首页按 macOS 的单环或同心双环展示剩余额度；颜色标识额度窗口，环下保留重置时间，第三个返回窗口单独展示
 - Windows 原生 exact-HWND、后台不抢前台的视觉采集 workflow
 
 ## Windows Dashboard showcase
