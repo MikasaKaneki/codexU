@@ -20,6 +20,7 @@ import type {
 import { LEADERSHIP_BANDS, type LeadershipBand, resolveLeadershipBand } from '../utils/leadershipTitles';
 import { useI18n } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/messages';
+import { LeadershipCommandGraphic } from './LeadershipCommandGraphic';
 
 interface LeadershipPanelProps {
   signal: CodexLeadershipSignal | null;
@@ -69,6 +70,7 @@ export function LeadershipOverviewCard({
 }) {
   const { t, language } = useI18n();
   const report = signal ? getReportFromSignal(signal) : null;
+  const todayAgents = signal?.report?.reports.find(item => item.period === 'today')?.agent_count ?? null;
   const score = signal?.score ?? null;
   const evidenceRatio = signal?.evidence_coverage ?? 0;
   const activeBand = resolveLeadershipBand(score, evidenceRatio, signal?.active_day_count ?? 0);
@@ -101,11 +103,9 @@ export function LeadershipOverviewCard({
           activeBand={activeBand}
           hasSignal={hasSignal}
           showScore={false}
+          showTitle
+          agentCount={todayAgents}
         />
-        <div className="leadership-overview-identity">
-          <strong>{title}</strong>
-          <span>{hasSignal && activeBand ? t('leadership.bandLabel') : hasUsage ? t('leadership.recordInsufficient') : t('leadership.noSnapshot')}</span>
-        </div>
       </div>
       <div className="leadership-overview-facts">
         <OverviewFact icon={<Brain size={13} />} label={t('leadership.score')} value={formatScore(hasSignal ? scoreForVisual : null)} />
@@ -177,6 +177,7 @@ export function LeadershipPanel({ signal }: LeadershipPanelProps) {
               activeBand={activeBand}
               hasSignal={hasSignal}
               showScore={false}
+              agentCount={signal.report?.reports.find(item => item.period === 'today')?.agent_count ?? null}
             />
             <div className="leadership-identity-copy">
               <div className="leadership-identity-eyebrow">
@@ -369,39 +370,32 @@ export function LeadershipOrbit({
   hasSignal,
   activeBand,
   showScore = true,
+  showTitle = false,
+  agentCount = null,
 }: {
   score: number;
   hasSignal: boolean;
   activeBand: LeadershipBand | null;
   showScore?: boolean;
+  showTitle?: boolean;
+  agentCount?: number | null;
 }) {
-  const { t } = useI18n();
-  const radius = 56;
-  const circumference = Math.round(2 * Math.PI * radius);
+  const { t, language } = useI18n();
   const safeScore = hasSignal ? clampPercent(score) : 0;
-  const dashOffset = circumference - (safeScore / 100) * circumference;
 
   return (
     <div className="leadership-orbit-wrap">
-      <div className="leadership-orbit" role="img" aria-label={t('leadership.orbit')}>
+      <div className="leadership-orbit" role="img" aria-label={agentCount == null ? t('leadership.orbit') : t('leadership.commandRadius', { value: agentCount })}
+        title={agentCount == null ? undefined : t('leadership.commandRadius', { value: agentCount })}>
+        <LeadershipCommandGraphic level={hasSignal ? activeBand?.level ?? 0 : 0} agentCount={agentCount} />
         {hasSignal && activeBand ? (
             <img src={activeBand.badge} alt={t('leadership.badge')} className="leadership-orbit-badge" />
         ) : (
           <ShieldQuestion size={40} className="leadership-orbit-neutral-icon" />
         )}
-        <svg viewBox="0 0 140 140" className="leadership-orbit-ring">
-          <circle cx="70" cy="70" r={radius} className="orbit-track" fill="none" />
-          {hasSignal ? (
-            <circle
-              cx="70"
-              cy="70"
-              r={radius}
-              className="orbit-value"
-              strokeDasharray={circumference}
-              strokeDashoffset={dashOffset}
-            />
-          ) : null}
-        </svg>
+        {showTitle ? <span className={`leadership-command-plaque ${!hasSignal ? 'leadership-command-plaque-empty' : ''}`}>
+          {hasSignal && activeBand ? `L${activeBand.level} · ${bandName(activeBand, language)}` : t('leadership.recordBuilding')}
+        </span> : null}
       </div>
       {showScore ? (
         <div className={`leadership-orbit-score ${!hasSignal ? 'leadership-orbit-score-empty' : ''}`}>

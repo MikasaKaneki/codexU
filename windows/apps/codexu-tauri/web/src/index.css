@@ -21,6 +21,8 @@
   --accent-secondary: #8b6dff;
   --accent-strong: #1f59ed;
   --accent-light: #7ba0ff;
+  --accent-highlight: #daa3fa;
+  --accent-secondary-strong: #6d45e8;
   --surface: #ffffff;
   --surface-elevated: rgba(255, 255, 255, 0.8);
   --surface-elevated-strong: rgba(255, 255, 255, 0.94);
@@ -57,6 +59,7 @@
   --ornament-secondary: #8b6dff;
   --ornament-highlight: #ffffff;
   --ornament-metal: #d2b27b;
+  --data-flow-particle: #ffffff;
   --shadow-soft: 0 16px 42px -30px rgba(15, 23, 42, 0.33);
 }
 
@@ -227,7 +230,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 0.6rem;
+    gap: 0.65rem;
     color: var(--text-primary);
     text-align: center;
     cursor: pointer;
@@ -272,40 +275,14 @@ body {
     gap: 0.05rem;
   }
 
-  .leadership-overview-card .leadership-orbit,
-  .leadership-overview-card .leadership-orbit-ring {
-    width: 118px;
-    height: 118px;
+  .leadership-overview-card .leadership-orbit {
+    width: 145px;
+    height: 145px;
   }
 
   .leadership-overview-card .leadership-orbit-badge {
-    width: 70px;
-    height: 70px;
-  }
-
-  .leadership-overview-identity {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 0;
-    gap: 0.12rem;
-  }
-
-  .leadership-overview-identity strong {
-    color: var(--text-primary);
-    font-size: 0.84rem;
-    font-weight: 750;
-    line-height: 1.15;
-  }
-
-  .leadership-overview-identity span {
-    max-width: 100%;
-    overflow: hidden;
-    color: var(--text-tertiary);
-    font-size: 0.64rem;
-    line-height: 1.15;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    width: 58px;
+    height: 58px;
   }
 
   .leadership-overview-facts {
@@ -373,8 +350,7 @@ body {
     flex: 0 0 auto;
   }
 
-  .leadership-identity-card .leadership-orbit,
-  .leadership-identity-card .leadership-orbit-ring {
+  .leadership-identity-card .leadership-orbit {
     width: 112px;
     height: 112px;
   }
@@ -454,25 +430,54 @@ body {
     gap: 0.22rem;
   }
 
-  .leadership-orbit-ring {
-    width: 132px;
-    height: 132px;
-    transform: rotate(-90deg);
+  .leadership-command-graphic {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .leadership-command-graphic svg {
+    width: 100%;
+    height: 100%;
     overflow: visible;
   }
-
-  .orbit-track {
-    stroke: color-mix(in oklab, var(--text-tertiary) 18%, transparent);
-    stroke-width: 8;
-    stroke-linecap: round;
+  .leadership-command-glow,
+  .leadership-command-breath {
+    filter: blur(4.2px);
+    opacity: 0.19;
   }
-
-  .orbit-value {
-    stroke: color-mix(in oklab, var(--accent) 65%, var(--text-secondary));
-    stroke-width: 8;
-    stroke-linecap: round;
-    fill: none;
-    transition: stroke-dashoffset 240ms ease;
+  .leadership-command-breath {
+    animation: leadership-breath 3.8s ease-in-out infinite;
+  }
+  .leadership-command-nodes-moving {
+    transform-origin: 50% 50%;
+    animation: leadership-orbit var(--orbit-duration) linear infinite var(--orbit-direction);
+  }
+  .leadership-command-plaque {
+    position: absolute;
+    top: calc(50% + 25px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 112px;
+    height: 22px;
+    padding: 0 6px;
+    border: 1px solid color-mix(in oklab, var(--accent) 56%, transparent);
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--text-primary) 78%, var(--surface));
+    color: var(--data-flow-particle);
+    font-size: 0.625rem;
+    font-weight: 750;
+    line-height: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: var(--shadow-soft);
+  }
+  .dark .leadership-command-plaque {
+    background: color-mix(in oklab, var(--surface) 92%, transparent);
+  }
+  .leadership-command-plaque-empty {
+    background: var(--surface-inset);
+    color: var(--text-secondary);
   }
 
   .leadership-orbit-score {
@@ -492,6 +497,7 @@ body {
     width: 78px;
     height: 78px;
     object-fit: contain;
+    filter: drop-shadow(0 2px 5px color-mix(in oklab, var(--accent) 18%, transparent));
     border-radius: 999px;
     box-shadow: 0 0 0 1px color-mix(in oklab, var(--surface-elevated-strong) 60%, transparent);
   }
@@ -728,6 +734,7 @@ body {
     align-items: flex-start;
     justify-content: space-between;
     gap: 0.65rem;
+    height: 20px;
   }
 
   .dashboard-overview-heading {
@@ -942,6 +949,25 @@ body {
     top: var(--quota-cap-y);
     left: var(--quota-cap-x);
     background: var(--quota-end);
+  }
+
+  .quota-flow-particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .quota-flow-dot {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--flow-size);
+    height: var(--flow-size);
+    offset-path: var(--flow-path);
+    offset-anchor: 50% 50%;
+    border-radius: 50%;
+    background: var(--data-flow-particle);
+    opacity: 0;
+    animation: quota-flow var(--flow-duration) linear var(--flow-delay) infinite;
   }
 
   .quota-overview-readouts {
@@ -1571,6 +1597,22 @@ body {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+}
+
+@keyframes quota-flow {
+  0% { offset-distance: 0%; opacity: 0; }
+  8% { opacity: var(--flow-opacity); }
+  88% { opacity: var(--flow-opacity); }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+@keyframes leadership-orbit {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes leadership-breath {
+  0%, 100% { opacity: 0.06; }
+  50% { opacity: 0.32; }
 }
 
 @media (prefers-reduced-motion: reduce) {

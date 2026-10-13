@@ -2,6 +2,8 @@ import { RefreshCw, RotateCcw, ShieldAlert } from 'lucide-react';
 import { type CSSProperties } from 'react';
 import { type RateWindow, type UsageSnapshot } from '../types/models';
 import { useI18n } from '../i18n/I18nProvider';
+import { useVisualActivity } from '../hooks/useVisualActivity';
+import { QuotaParticles } from './QuotaParticles';
 
 interface QuotaOverviewProps {
   snapshot: UsageSnapshot | null | undefined;
@@ -34,6 +36,7 @@ function remainingText(window: RateWindow): string {
 function QuotaRing({ entry, diameter, stroke = RING_GEOMETRY.stroke, t }: {
   entry: QuotaEntry; diameter: number; stroke?: number; t: ReturnType<typeof useI18n>['t'];
 }) {
+  const { ref, active } = useVisualActivity<HTMLDivElement>();
   const percent = remainingPercent(entry.window.used_percent);
   const angle = (percent ?? 0) / 100 * Math.PI * 2;
   const radius = (diameter - stroke) / 2;
@@ -44,7 +47,7 @@ function QuotaRing({ entry, diameter, stroke = RING_GEOMETRY.stroke, t }: {
     '--quota-cap-y': `${diameter / 2 - Math.cos(angle) * radius}px`,
   } as CSSProperties;
   return (
-    <div className="quota-overview-ring" data-quota-kind={entry.kind} data-quota-role={entry.role}
+    <div ref={ref} className="quota-overview-ring" data-quota-kind={entry.kind} data-quota-role={entry.role}
       style={style} role="meter" aria-label={entry.label} aria-valuemin={0} aria-valuemax={100}
       aria-valuenow={percent == null ? undefined : Math.round(percent)}
       aria-valuetext={percent == null ? t('common.notAvailable') : t('quota.remaining', { value: Math.round(percent) })}>
@@ -53,6 +56,7 @@ function QuotaRing({ entry, diameter, stroke = RING_GEOMETRY.stroke, t }: {
         <span className="quota-overview-ring-cap quota-overview-ring-cap-start" aria-hidden="true" />
         <span className="quota-overview-ring-cap quota-overview-ring-cap-end" aria-hidden="true" />
       </> : null}
+      {active && percent != null && percent > 2 && diameter > 24 ? <QuotaParticles remaining={percent} diameter={diameter} stroke={stroke} lane={diameter === RING_GEOMETRY.outer ? 0 : 1} /> : null}
     </div>
   );
 }
