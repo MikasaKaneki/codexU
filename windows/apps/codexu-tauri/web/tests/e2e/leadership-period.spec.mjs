@@ -4,7 +4,7 @@ import path from 'node:path';
 import { createVisualFixture } from './support/fixture-data.mjs';
 
 const periods = ['today', 'sevenDays', 'twentyEightDays'];
-const labels = { en: ['today', '7 days', '28 days'], 'zh-Hans': ['今日', '近 7 天', '近 28 天'] };
+const labels = { en: ['today', '7 days', '28 days'], 'zh-Hans': ['今天', '近 7 天', '近 28 天'] };
 
 function distinctFixture() {
   const data = createVisualFixture();
@@ -47,6 +47,8 @@ async function select(panel, language, index) {
 async function assertReport(panel, report, language) {
   const index = periods.indexOf(report.period);
   await expect(panel.locator('.leadership-period-badge')).toHaveText(labels[language][index]);
+  await expect(panel.getByRole('heading', { name: language === 'en'
+    ? `${labels[language][index]} · Trend Snapshot` : `${labels[language][index]}趋势快照`, exact: true })).toBeVisible();
   const known = report.score !== null && report.evidence_coverage > 0 && report.active_day_count > 0;
   const score = known ? `${Math.round(report.score)} / 100` : '--';
   await expect(panel.locator('.leadership-identity-score strong')).toHaveText(score);

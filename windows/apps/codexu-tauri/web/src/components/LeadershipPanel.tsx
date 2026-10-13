@@ -343,7 +343,7 @@ function LeadershipReportDetails({ signal, report }: { signal: CodexLeadershipSi
         <div className="glass-panel p-5">
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp size={16} className="text-secondary" />
-            <h3 className="text-sm font-semibold text-primary">{t('leadership.trendSnapshot')}</h3>
+            <h3 className="text-sm font-semibold text-primary">{t('leadership.trendSnapshot', { period: formatPeriod(report.period, t) })}</h3>
           </div>
           {report.daily_points.length === 0 ? (
             <p className="text-sm text-secondary">{t('leadership.noTrendPoints')}</p>
