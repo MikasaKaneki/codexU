@@ -94,7 +94,8 @@ pub struct SessionSummary {
     pub git_branch: Option<String>,
     /// Git origin URL captured when the thread was created.
     pub git_origin_url: Option<String>,
-    /// Worker kind source from the state DB, if available (`main`, `subagent`, `automation`).
+    /// Source from the state DB. Only `subagent` and `automation` are special
+    /// worker kinds; all other values (including absent sources) describe main agents.
     pub thread_source: Option<String>,
     /// Parent thread id from optional runtime edges table, if available.
     pub parent_thread_id: Option<String>,
