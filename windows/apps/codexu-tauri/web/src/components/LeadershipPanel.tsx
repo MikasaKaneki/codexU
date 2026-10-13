@@ -9,7 +9,7 @@ import {
   ShieldQuestion,
   TrendingUp,
 } from 'lucide-react';
-import { type CSSProperties, type ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import type {
   CodexLeadershipSignal,
   LeadershipDayPoint,
@@ -69,7 +69,7 @@ export function LeadershipOverviewCard({
   onOpen: () => void;
 }) {
   const { t, language } = useI18n();
-  const report = signal ? getReportFromSignal(signal) : null;
+  const report = signal?.report?.reports.find(item => item.period === 'twentyEightDays') ?? null;
   const todayAgents = signal?.report?.reports.find(item => item.period === 'today')?.agent_count ?? null;
   const score = signal?.score ?? null;
   const evidenceRatio = signal?.evidence_coverage ?? 0;
@@ -118,32 +118,43 @@ export function LeadershipOverviewCard({
 }
 
 export function LeadershipPanel({ signal }: LeadershipPanelProps) {
+  const { t } = useI18n();
+  const [period, setPeriod] = useState('twentyEightDays');
+  const report = signal?.report?.reports.find(item => item.period === period) ?? null;
+
+  return (
+    <div className="space-y-6">
+      <div className="leadership-period-switcher" role="group" aria-label={t('leadership.periodSelector')}>
+        {['today', 'sevenDays', 'twentyEightDays'].map(item => (
+          <button
+            key={item}
+            type="button"
+            aria-pressed={period === item}
+            className={period === item ? 'glass-button-solid' : 'glass-button'}
+            onClick={() => setPeriod(item)}
+          >
+            {formatPeriod(item, t)}
+          </button>
+        ))}
+      </div>
+      {signal && report ? <LeadershipReportDetails signal={signal} report={report} /> : (
+        <section className="glass-panel p-6 sm:p-7 space-y-3" role="status">
+          <h2 className="text-lg font-semibold text-primary">{t('leadership.title')}</h2>
+          <p className="text-sm text-secondary">
+            {signal
+              ? t('leadership.reportNotReady', { period: formatPeriod(period, t) })
+              : t('leadership.noSnapshotDetail')}
+          </p>
+        </section>
+      )}
+    </div>
+  );
+}
+
+function LeadershipReportDetails({ signal, report }: { signal: CodexLeadershipSignal; report: LeadershipReport }) {
   const { t, language } = useI18n();
-  if (!signal) {
-    return (
-      <section className="glass-panel p-6 sm:p-7 space-y-3">
-        <h2 className="text-lg font-semibold text-primary">{t('leadership.title')}</h2>
-        <p className="text-sm text-secondary">
-          {t('leadership.noSnapshotDetail')}
-        </p>
-      </section>
-    );
-  }
-
-  const report = getReportFromSignal(signal);
-  if (!report) {
-    return (
-      <section className="glass-panel p-6 sm:p-7 space-y-3">
-        <h2 className="text-lg font-semibold text-primary">{t('leadership.title')}</h2>
-        <p className="text-sm text-secondary">
-          {t('leadership.reportNotReady', { period: formatPeriod(signal.period, t) })}
-        </p>
-      </section>
-    );
-  }
-
-  const score = signal.score;
-  const evidenceRatio = Number.isFinite(signal.evidence_coverage) ? signal.evidence_coverage : 0;
+  const score = report.score;
+  const evidenceRatio = Number.isFinite(report.evidence_coverage) ? report.evidence_coverage : 0;
   const activeBand = resolveLeadershipBand(score, evidenceRatio, report.active_day_count);
   const hasSignal = score !== null && activeBand !== null;
   const confidence = Math.max(0, Math.min(100, Math.round(evidenceRatio * 100)));
@@ -182,7 +193,7 @@ export function LeadershipPanel({ signal }: LeadershipPanelProps) {
             <div className="leadership-identity-copy">
               <div className="leadership-identity-eyebrow">
                 <span>{t('leadership.title')}</span>
-                <span className="leadership-period-badge">{t('leadership.period')}</span>
+                <span className="leadership-period-badge">{formatPeriod(report.period, t)}</span>
               </div>
               <h2 className="leadership-identity-title">
                 {hasSignal && activeBand
@@ -510,12 +521,6 @@ export function LeadershipCommandRail({
       {railContent}
     </button>
   );
-}
-
-function getReportFromSignal(signal: CodexLeadershipSignal): LeadershipReport | null {
-  if (!signal.report) return null;
-  const byPeriod = signal.report.reports.find((item) => item.period === signal.period);
-  return byPeriod ?? signal.report.reports[0] ?? null;
 }
 
 function bandName(band: LeadershipBand, language: 'zh-Hans' | 'en'): string {
