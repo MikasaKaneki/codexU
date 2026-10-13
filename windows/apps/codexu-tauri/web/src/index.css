@@ -1226,19 +1226,25 @@ body {
     gap: 0.8rem;
   }
 
-  .inference-period-switcher {
+  .inference-period-switcher,
+  .leadership-period-switcher {
     display: inline-flex;
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 0.32rem;
   }
 
-  .inference-period-switcher button {
+  .inference-period-switcher button,
+  .leadership-period-switcher button {
     min-height: 1.9rem;
     padding: 0.3rem 0.65rem;
     border-radius: 999px;
     font-size: 0.68rem;
     font-weight: 700;
+  }
+
+  .leadership-period-switcher {
+    justify-content: flex-start;
   }
 
   .inference-help {
