@@ -29,6 +29,16 @@ export function LeadershipCommandGraphic({ level, agentCount }: { level: number;
         <circle cx="72.5" cy="72.5" r={radius} fill="none" stroke={`url(#${id}-${index})`} strokeWidth={3.2 + index * 0.55} opacity={0.2 + (index + 1) / ringCount * 0.06} />
         <circle cx="72.5" cy="72.5" r={radius} fill="none" stroke={`url(#${id}-${index})`} strokeWidth={1.7 + index * 0.38} strokeDasharray={DASHES[index]} strokeLinecap="round" />
       </g>)}
+      {active ? rings.map((radius, lane) => <g key={`flow-${lane}`} className="leadership-command-flow" style={{
+        '--orbit-duration': `${Math.PI * 2 / (Math.abs(VELOCITIES[lane]) * 1.8)}s`,
+        '--orbit-direction': VELOCITIES[lane] < 0 ? 'reverse' : 'normal',
+      } as CSSProperties}>
+        {/* Continuous arc highlights express rank activity, never an Agent count. */}
+        {[24, 16, 8].map((length, index) => <circle key={length} cx="72.5" cy="72.5" r={radius}
+          pathLength="100" fill="none" stroke={COLORS[lane][2]} strokeWidth={3.2 + lane * 0.55}
+          strokeDasharray={`${length} ${100 - length}`} strokeDashoffset={lane * 31}
+          strokeLinecap="round" opacity={0.25 + index * 0.25} />)}
+      </g>) : null}
       {rings.map((radius, lane) => {
         const count = Math.ceil((nodeCount - lane) / ringCount);
         const velocity = VELOCITIES[lane];

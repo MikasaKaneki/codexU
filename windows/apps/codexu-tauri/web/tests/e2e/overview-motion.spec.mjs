@@ -3,11 +3,12 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { createVisualFixture } from './support/fixture-data.mjs';
 
-async function load(page, { score = 42, theme = 'light', native = false, missing = false, longSkills = false } = {}) {
+async function load(page, { score = 42, theme = 'light', native = false, missing = false, longSkills = false, todayAgents = 6 } = {}) {
   const data = createVisualFixture();
   data.settings.config.theme = theme;
   data.dashboard.leadership.score = score;
   data.dashboard.leadership.report.reports[0].score = score;
+  data.dashboard.leadership.report.reports.find(report => report.period === 'today').agent_count = todayAgents;
   if (longSkills) data.dashboard.codex.snapshot.local.skill_usages = Array.from({ length: 20 }, (_, index) => ({
     ...data.dashboard.codex.snapshot.local.skill_usages[0], id: `long-skill-${index}`, name: `Long skill ${index}`,
   }));
@@ -135,3 +136,27 @@ test('exhausted or missing quota and unknown rank do not animate invented data',
   await expect(page.getByRole('meter').first()).toHaveAttribute('aria-valuenow', '0');
   await expect(page.getByRole('meter').nth(1)).not.toHaveAttribute('aria-valuenow');
 });
+
+for (const todayAgents of [null, 0]) {
+  test(`known rank visibly flows with ${todayAgents} today Agents without inventing nodes`, async ({ page }) => {
+    await load(page, { todayAgents, native: true });
+    await expect(host(page).locator('.leadership-command-node')).toHaveCount(0);
+    const flow = host(page).locator('.leadership-command-flow');
+    await expect(flow).toHaveCount(2);
+    const transform = () => flow.first().evaluate(element => getComputedStyle(element).transform);
+    const before = await transform();
+    await expect.poll(transform).not.toBe(before);
+    await page.evaluate(() => window.__emitVisualEvent('visual-power-save', true));
+    await expect(flow).toHaveCount(0);
+    await page.evaluate(() => window.__emitVisualEvent('visual-power-save', false));
+    await expect(flow).toHaveCount(2);
+    await page.evaluate(() => window.dispatchEvent(new Event('blur')));
+    await expect(flow).toHaveCount(0);
+    await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    await expect(flow).toHaveCount(2);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expect(flow).toHaveCount(0);
+    await expect(host(page)).toHaveAttribute('data-ring-count', '2');
+    await expect(host(page).locator('.leadership-command-node')).toHaveCount(0);
+  });
+}

@@ -448,7 +448,8 @@ body {
   .leadership-command-breath {
     animation: leadership-breath 3.8s ease-in-out infinite;
   }
-  .leadership-command-nodes-moving {
+  .leadership-command-nodes-moving,
+  .leadership-command-flow {
     transform-origin: 50% 50%;
     animation: leadership-orbit var(--orbit-duration) linear infinite var(--orbit-direction);
   }
