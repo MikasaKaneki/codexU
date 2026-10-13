@@ -276,8 +276,12 @@ export function LeadershipPanel({ signal }: LeadershipPanelProps) {
             <div className="mt-4 p-3 rounded-lg border border-theme bg-surface-inset text-sm">
               <p className="text-primary font-medium">{t('leadership.latestDaySignal')}</p>
               <p className="text-xs text-secondary mt-1">
-                {formatPointDate(latest.day)} | {latest.agent_count} agents, {latest.ai_hours.toFixed(1)}h AI hours,
-                peak {latest.peak_concurrency}
+                {t('leadership.latestDayFacts', {
+                  date: formatPointDate(latest.day),
+                  agents: latest.agent_count,
+                  hours: latest.ai_hours.toFixed(1),
+                  peak: latest.peak_concurrency,
+                })}
               </p>
             </div>
           ) : (
@@ -354,7 +358,7 @@ export function LeadershipPanel({ signal }: LeadershipPanelProps) {
           {trend ? (
             <p className="text-xs text-secondary mt-1">
               {t('leadership.momentum', {
-                direction: trend.direction === 'up' ? 'up' : 'down',
+                direction: t(trend.direction === 'up' ? 'leadership.momentumUp' : 'leadership.momentumDown'),
                 delta: `${trend.delta >= 0 ? '+' : ''}${trend.delta.toFixed(2)}`,
               })}
             </p>
