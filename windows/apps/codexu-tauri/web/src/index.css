@@ -796,12 +796,6 @@ body {
     white-space: nowrap;
   }
 
-  .dashboard-overview-status-confirmed {
-    border-color: color-mix(in oklab, var(--status-ok) 32%, var(--border));
-    color: var(--status-ok);
-    background: color-mix(in oklab, var(--status-ok) 9%, var(--surface-inset));
-  }
-
   .quota-overview-state {
     display: flex;
     flex-direction: column;

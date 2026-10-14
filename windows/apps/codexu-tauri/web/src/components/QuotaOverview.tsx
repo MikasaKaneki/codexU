@@ -84,12 +84,12 @@ export function QuotaOverview({ snapshot, sourceLabel, onRefresh }: QuotaOvervie
       <div className="dashboard-overview-header">
         <div className="dashboard-overview-heading">
           <div>
-            <h3>{t('quota.remainingTitle')}</h3>
+            <h3 title={sourceLabel ?? t('quota.officialSource')}>{t('quota.remainingTitle')}</h3>
           </div>
         </div>
-        <span title={sourceLabel ?? t('quota.officialSource')} className={`dashboard-overview-status ${hasQuota && quotaReadSucceeded ? 'dashboard-overview-status-confirmed' : ''}`}>
-          {hasQuota && !quotaReadSucceeded ? t('quota.savedBadge') : t('quota.officialBadge')}
-        </span>
+        {hasQuota && !quotaReadSucceeded ? <span className="dashboard-overview-status">
+          {t('quota.savedBadge')}
+        </span> : null}
       </div>
 
       {hasQuota ? (

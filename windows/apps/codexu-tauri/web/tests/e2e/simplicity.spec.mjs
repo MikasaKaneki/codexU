@@ -32,9 +32,8 @@ for (const language of ['en', 'zh-Hans']) {
         await expect(quota.locator('.quota-overview-reset').first()).toHaveAttribute('title', language === 'en' ? /Resets/ : /重置/);
         await expect(quota).not.toContainText(language === 'en' ? 'Only confirmed' : '这里只显示');
         await expect(quota.locator('.quota-overview-state')).toHaveCount(0);
-        const badge = quota.locator('.dashboard-overview-status');
-        await expect(badge).toHaveText(language === 'en' ? 'Official' : '官方');
-        expect(await badge.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+        await expect(quota.locator('.dashboard-overview-status')).toHaveCount(0);
+        await expect(quota.locator('h3')).toHaveAttribute('title', /Codex/);
         const folder = path.join(info.outputDir, 'evidence');
         await mkdir(folder, { recursive: true });
         await page.locator('.dashboard-home-overview').screenshot({ path: path.join(folder, 'overview.png') });
@@ -62,8 +61,7 @@ test('previous official quota remains labeled as saved after a failed read', asy
   await load(page, { succeeded: false });
   const quota = page.locator('.dashboard-home-quota');
   await expect(quota.getByRole('meter')).toHaveCount(3);
-  await expect(quota).toContainText('Official · saved');
-  await expect(quota.locator('.dashboard-overview-status-confirmed')).toHaveCount(0);
+  await expect(quota.locator('.dashboard-overview-status')).toHaveText('Saved result');
 });
 
 test('short history keeps its daily readings and has a compact heatmap', async ({ page }) => {

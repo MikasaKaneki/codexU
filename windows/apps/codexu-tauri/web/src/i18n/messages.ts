@@ -188,8 +188,7 @@ const en = {
     checking: 'Checking official Codex quota',
     retry: 'Retry quota check',
     officialSource: 'Official Codex quota',
-    officialBadge: 'Official',
-    savedBadge: 'Official · saved',
+    savedBadge: 'Saved result',
   },
   monthly: {
     title: 'Monthly value progress',
@@ -491,8 +490,7 @@ const zhHans: MessageShape<typeof en> = {
     checking: '正在检查官方 Codex 额度',
     retry: '重试额度检查',
     officialSource: '官方 Codex 额度',
-    officialBadge: '官方',
-    savedBadge: '官方 · 上次',
+    savedBadge: '上次结果',
   },
   monthly: {
     title: '月度价值进度',
