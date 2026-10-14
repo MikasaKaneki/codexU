@@ -196,10 +196,14 @@ jobs:
         with:
           name: codexu-macos-${{ needs.resolve-version.outputs.version }}
           path: dist
+          run-id: ${{ inputs.candidate_run || github.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/download-artifact@v4
         with:
           name: codexu-windows-${{ needs.resolve-version.outputs.version }}
           path: dist/windows
+          run-id: ${{ inputs.candidate_run || github.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Verify all installers and checksums
         run: bash scripts/check-cross-platform-release-assets.sh "${{ needs.resolve-version.outputs.version }}" dist
       - name: Upload verified release bundle
