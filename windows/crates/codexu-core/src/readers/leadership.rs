@@ -43,7 +43,7 @@ pub fn build_leadership_snapshot_with_timezone(
 }
 
 fn make_worker(session: &SessionSummary) -> LeadershipWorker {
-    let (kind, automation_id, _) = classify_worker_kind(session);
+    let (kind, automation_id) = classify_worker_kind(session);
     LeadershipWorker {
         id: build_worker_id("codex", kind, &session.session_id, automation_id.as_deref()),
         runtime: "codex".to_string(),
@@ -70,7 +70,7 @@ fn build_intervals(
     sessions
         .iter()
         .flat_map(|session| {
-            let (kind, automation_id, has_factual_source) = classify_worker_kind(session);
+            let (kind, automation_id) = classify_worker_kind(session);
             let worker_id =
                 build_worker_id("codex", kind, &session.session_id, automation_id.as_deref());
             let worker = worker_map
@@ -84,9 +84,7 @@ fn build_intervals(
                     return None;
                 }
                 let mut quality = interval.quality;
-                if !interval_has_factual_timing(session.created_at, interval, now)
-                    || !has_factual_source
-                {
+                if !interval_has_factual_timing(session.created_at, interval, now) {
                     quality = LeadershipEvidenceQuality::Estimated;
                 } else if kind == LeadershipWorkerKind::Automation && automation_id.is_none() {
                     quality = LeadershipEvidenceQuality::Derived;
@@ -288,17 +286,21 @@ fn build_report(
     }
 }
 
-fn classify_worker_kind(session: &SessionSummary) -> (LeadershipWorkerKind, Option<String>, bool) {
-    match session.thread_source.as_deref() {
-        Some("main") => (LeadershipWorkerKind::Main, None, true),
-        Some("subagent") => (LeadershipWorkerKind::Subagent, None, true),
+fn classify_worker_kind(session: &SessionSummary) -> (LeadershipWorkerKind, Option<String>) {
+    // Source describes worker kind; task timing independently determines evidence quality.
+    // Match the macOS adapter: only subagent and automation are special kinds.
+    match session
+        .thread_source
+        .as_deref()
+        .map(str::to_ascii_lowercase)
+        .as_deref()
+    {
+        Some("subagent") => (LeadershipWorkerKind::Subagent, None),
         Some("automation") => (
             LeadershipWorkerKind::Automation,
             extract_automation_id(session.title.as_deref()),
-            true,
         ),
-        Some(_) => (LeadershipWorkerKind::Main, None, false),
-        None => (LeadershipWorkerKind::Main, None, false),
+        _ => (LeadershipWorkerKind::Main, None),
     }
 }
 
@@ -878,6 +880,167 @@ mod tests {
     }
 
     #[test]
+    fn source_kinds_preserve_factual_tasks_in_every_period() {
+        let now = Utc.with_ymd_and_hms(2026, 7, 28, 12, 0, 0).unwrap();
+        for (source, kind) in [
+            (Some("main"), LeadershipWorkerKind::Main),
+            (Some("user"), LeadershipWorkerKind::Main),
+            (Some("agent_created_thread"), LeadershipWorkerKind::Main),
+            (Some("USER"), LeadershipWorkerKind::Main),
+            (Some("future_source"), LeadershipWorkerKind::Main),
+            (Some(""), LeadershipWorkerKind::Main),
+            (None, LeadershipWorkerKind::Main),
+            (Some("SuBaGeNt"), LeadershipWorkerKind::Subagent),
+            (Some("AuToMaTiOn"), LeadershipWorkerKind::Automation),
+        ] {
+            let session = mock_session(
+                "source-task",
+                "C:/Projects/A",
+                source,
+                Some("parent"),
+                LeadershipEvidenceQuality::Fact,
+                60,
+                30,
+                None,
+                Some(now - Duration::hours(2)),
+            );
+            assert_eq!(make_worker(&session).kind, kind, "source={source:?}");
+            let workers = vec![make_worker(&session)];
+            let intervals = build_intervals(std::slice::from_ref(&session), &workers, now);
+            assert_eq!(
+                intervals[0].quality,
+                if kind == LeadershipWorkerKind::Automation {
+                    LeadershipEvidenceQuality::Derived
+                } else {
+                    LeadershipEvidenceQuality::Fact
+                }
+            );
+            for report in build_leadership_snapshot_with_timezone(
+                &[session],
+                now,
+                StatisticsTimeZone::Named(chrono_tz::Asia::Shanghai),
+            )
+            .reports
+            {
+                assert_eq!(
+                    report.agent_count,
+                    Some(1),
+                    "source={source:?}, period={}",
+                    report.period
+                );
+                assert_eq!(report.ai_hours, Some(0.5));
+                assert_eq!(
+                    report.autonomous_hours,
+                    Some(if kind == LeadershipWorkerKind::Main {
+                        0.0
+                    } else {
+                        0.5
+                    })
+                );
+                assert!(report.score.is_some());
+            }
+        }
+    }
+
+    #[test]
+    fn main_sources_cannot_promote_invalid_or_missing_task_evidence() {
+        let now = Utc.with_ymd_and_hms(2026, 7, 28, 12, 0, 0).unwrap();
+        for source in [Some("user"), Some("agent_created_thread"), None] {
+            let valid = mock_session(
+                "invalid-task",
+                "C:/Projects/A",
+                source,
+                None,
+                LeadershipEvidenceQuality::Fact,
+                60,
+                30,
+                None,
+                Some(now - Duration::hours(2)),
+            );
+            let mut cases = Vec::new();
+            let mut missing_created = valid.clone();
+            missing_created.created_at = None;
+            cases.push(missing_created);
+            let mut before_created = valid.clone();
+            before_created.created_at = Some(now);
+            cases.push(before_created);
+            let mut future = valid.clone();
+            future.task_intervals[0].ended_at = now + Duration::seconds(6);
+            cases.push(future);
+            let mut reversed = valid.clone();
+            reversed.task_intervals[0].ended_at = reversed.task_intervals[0].started_at;
+            cases.push(reversed);
+            let mut estimated = valid.clone();
+            estimated.task_intervals[0].quality = LeadershipEvidenceQuality::Estimated;
+            cases.push(estimated);
+            let mut no_tasks = valid;
+            no_tasks.task_intervals.clear();
+            cases.push(no_tasks);
+            for session in cases {
+                for report in build_leadership_snapshot(&[session], now).reports {
+                    assert_eq!(report.agent_count, None, "source={source:?}");
+                    assert_eq!(report.ai_hours, None);
+                    assert_eq!(report.score, None);
+                }
+            }
+        }
+        for report in build_leadership_snapshot(&[], now).reports {
+            assert_eq!(report.agent_count, None);
+            assert_eq!(report.score, None);
+        }
+    }
+
+    #[test]
+    fn main_duplicates_and_automation_runs_keep_distinct_worker_semantics() {
+        let now = Utc.with_ymd_and_hms(2026, 7, 28, 12, 0, 0).unwrap();
+        let main = mock_session(
+            "main-task",
+            "C:/Projects/A",
+            Some("user"),
+            None,
+            LeadershipEvidenceQuality::Fact,
+            60,
+            30,
+            None,
+            Some(now - Duration::hours(2)),
+        );
+        let mut duplicate = main.clone();
+        duplicate.thread_source = Some("agent_created_thread".to_string());
+        let sub = mock_session(
+            "sub-task",
+            "C:/Projects/A",
+            Some("SUBAGENT"),
+            Some("main-task"),
+            LeadershipEvidenceQuality::Fact,
+            60,
+            30,
+            None,
+            Some(now - Duration::hours(2)),
+        );
+        let automation = mock_session(
+            "auto-task-1",
+            "C:/Projects/A",
+            Some("AUTOMATION"),
+            None,
+            LeadershipEvidenceQuality::Fact,
+            60,
+            30,
+            Some("Automation ID: daily-job"),
+            Some(now - Duration::hours(2)),
+        );
+        let mut second_run = automation.clone();
+        second_run.session_id = "auto-task-2".to_string();
+        for report in
+            build_leadership_snapshot(&[main, duplicate, sub, automation, second_run], now).reports
+        {
+            assert_eq!(report.agent_count, Some(3));
+            assert_eq!(report.ai_hours, Some(1.5));
+            assert_eq!(report.autonomous_hours, Some(1.0));
+            assert_eq!(report.peak_concurrency, Some(3));
+        }
+    }
+
+    #[test]
     fn unscored_when_all_intervals_are_estimated() {
         let now = Utc
             .with_ymd_and_hms(2026, 7, 28, 12, 0, 0)
@@ -923,9 +1086,8 @@ mod tests {
             Some("Task runner"),
             Some(Utc.with_ymd_and_hms(2026, 7, 28, 12, 0, 0).unwrap() - Duration::minutes(45)),
         );
-        let (kind, _, has_factual_source) = classify_worker_kind(&session);
+        let (kind, _) = classify_worker_kind(&session);
         assert_eq!(kind, LeadershipWorkerKind::Subagent);
-        assert!(has_factual_source);
         let snapshot = build_leadership_snapshot(&[session], now);
         let report = snapshot
             .reports
@@ -1092,7 +1254,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn valid_task_jsonl_with_source_metadata_scores() {
+    async fn valid_task_jsonl_with_user_source_metadata_scores() {
         let now = Utc.with_ymd_and_hms(2026, 7, 28, 12, 0, 0).unwrap();
         let temp = tempdir().unwrap();
         let archived = temp.path().join("archived_sessions");
@@ -1126,7 +1288,7 @@ mod tests {
                 archived: false,
                 created_at: Some((now - Duration::minutes(30)) - Duration::seconds(1)),
                 updated_at: Some(now - Duration::minutes(1)),
-                thread_source: Some("main".to_string()),
+                thread_source: Some("user".to_string()),
                 parent_thread_id: None,
                 git_branch: None,
                 git_origin_url: None,

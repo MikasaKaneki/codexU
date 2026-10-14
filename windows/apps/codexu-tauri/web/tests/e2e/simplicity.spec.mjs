@@ -17,6 +17,7 @@ async function load(page, { language = 'en', theme = 'light', windows = true, su
   await page.addInitScript(data => { window.__CODEXU_VISUAL_DATA__ = data; }, data);
   await page.goto('/visual-test.html?surface=overview');
   await expect(page.locator('.dashboard-home')).toBeVisible();
+  return data;
 }
 
 for (const language of ['en', 'zh-Hans']) {
@@ -24,17 +25,16 @@ for (const language of ['en', 'zh-Hans']) {
     for (const width of [640, 960, 1440]) {
       test(`quota values fit without a success explainer: ${language} ${theme} ${width}`, async ({ page }, info) => {
         await page.setViewportSize({ width, height: 760 });
-        await load(page, { language, theme });
+        const fixture = await load(page, { language, theme });
         const quota = page.locator('.dashboard-home-quota');
         await expect(quota.getByRole('meter')).toHaveCount(3);
         for (const meter of await quota.getByRole('meter').all()) await expect(meter).toBeInViewport();
-        await expect(quota).toContainText(language === 'en' ? '0% used' : '已用 0%');
-        await expect(quota).toContainText(language === 'en' ? 'Resets' : '重置');
+        await expect(quota.getByRole('meter').first()).toHaveAttribute('aria-valuetext', language === 'en' ? '100% remaining' : '剩余 100%');
+        await expect(quota.locator('.quota-overview-reset').first()).toHaveAttribute('title', language === 'en' ? /Resets/ : /重置/);
         await expect(quota).not.toContainText(language === 'en' ? 'Only confirmed' : '这里只显示');
         await expect(quota.locator('.quota-overview-state')).toHaveCount(0);
-        const badge = quota.locator('.dashboard-overview-status');
-        await expect(badge).toHaveText(language === 'en' ? 'Official' : '官方');
-        expect(await badge.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+        await expect(quota.locator('.dashboard-overview-status')).toHaveCount(0);
+        await expect(quota.locator('h3')).toHaveAttribute('title', fixture.dashboard.codex.quota_source_label);
         const folder = path.join(info.outputDir, 'evidence');
         await mkdir(folder, { recursive: true });
         await page.locator('.dashboard-home-overview').screenshot({ path: path.join(folder, 'overview.png') });
@@ -62,8 +62,7 @@ test('previous official quota remains labeled as saved after a failed read', asy
   await load(page, { succeeded: false });
   const quota = page.locator('.dashboard-home-quota');
   await expect(quota.getByRole('meter')).toHaveCount(3);
-  await expect(quota).toContainText('Official · saved');
-  await expect(quota.locator('.dashboard-overview-status-confirmed')).toHaveCount(0);
+  await expect(quota.locator('.dashboard-overview-status')).toHaveText('Saved result');
 });
 
 test('short history keeps its daily readings and has a compact heatmap', async ({ page }) => {

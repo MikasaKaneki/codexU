@@ -11,14 +11,14 @@ test('Overview primary cards share the same visual hierarchy contract', () => {
   assert.match(quota, /quota-overview-state/);
   assert.match(quota, /quota-overview-state-empty/);
   assert.match(quota, /quota-overview-state-copy/);
-  assert.match(quota, /quota-overview-window/);
+  assert.match(quota, /quota-overview-rings/);
   assert.match(leadership, /dashboard-home-primary-card/);
   assert.match(leadership, /dashboard-overview-header/);
 });
 
-test('Quota overview exposes a visual progress track without changing quota semantics', () => {
-  assert.match(quota, /quota-overview-track/);
-  assert.match(quota, /quota-overview-fill/);
+test('Quota overview presents official quota as remaining rings', () => {
+  assert.match(quota, /quota-overview-ring/);
+  assert.match(quota, /quota-overview-ring-fill/);
   assert.match(quota, /used_percent/);
   assert.match(quota, /quota\.officialSource/);
 });
