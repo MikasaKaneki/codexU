@@ -817,12 +817,19 @@ mod tests {
             [],
         )
         .unwrap();
-        for n in 1..=1000 {
-            db.execute(
-                "INSERT INTO day_archive VALUES(?1,'2026-10-10','fixture','{}')",
-                [n],
-            )
-            .unwrap();
+        // Fixture setup is one committed dataset; avoid 1,000 unrelated fsyncs
+        // competing with process-lifecycle tests on shared Windows runners.
+        {
+            let transaction = db.transaction().unwrap();
+            for n in 1..=1000 {
+                transaction
+                    .execute(
+                        "INSERT INTO day_archive VALUES(?1,'2026-10-10','fixture','{}')",
+                        [n],
+                    )
+                    .unwrap();
+            }
+            transaction.commit().unwrap();
         }
         let reader = Connection::open(&path).unwrap();
         reader.execute_batch("BEGIN").unwrap();
