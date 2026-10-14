@@ -8,6 +8,26 @@ REPORT_DIR="$ROOT_DIR/build/memory-risk"
 REPORT_FILE="$REPORT_DIR/report.md"
 mkdir -p "$REPORT_DIR"
 
+# Keep an interrupted scan distinguishable from a completed, clean scan.
+printf '# codexU 全局内存风险门禁\n\n结论：**FAIL**\n\n扫描尚未完成；请检查命令错误并重新运行。\n' >"$REPORT_FILE"
+for required in rg git grep wc tr; do
+  if ! command -v "$required" >/dev/null 2>&1; then
+    printf '# codexU 全局内存风险门禁\n\n结论：**FAIL**\n\n缺少扫描依赖：%s。\n' "$required" >"$REPORT_FILE"
+    printf 'Memory risk gate: missing required command: %s\n' "$required" >&2
+    exit 127
+  fi
+done
+
+search_source() {
+  local status=0
+  rg -n "$1" Sources/CodexUsageWidget -g '*.swift' || status=$?
+  if (( status > 1 )); then
+    printf 'Memory risk scan failed (rg exit %d)\n' "$status" >&2
+    return "$status"
+  fi
+  return 0
+}
+
 FAILURES=0
 FAILURE_MESSAGES=()
 
@@ -20,7 +40,7 @@ forbid_regex() {
   local pattern="$1"
   local description="$2"
   local matches
-  matches="$(rg -n "$pattern" Sources/CodexUsageWidget -g '*.swift' || true)"
+  matches="$(search_source "$pattern")" || return "$?"
   if [[ -n "$matches" ]]; then
     fail "$description"
     printf '%s\n' "$matches" >"$REPORT_DIR/forbidden-$FAILURES.txt"
@@ -39,7 +59,7 @@ require_literal() {
 count_regex() {
   local pattern="$1"
   local matches
-  matches="$(rg -n "$pattern" Sources/CodexUsageWidget -g '*.swift' || true)"
+  matches="$(search_source "$pattern")" || return "$?"
   if [[ -z "$matches" ]]; then
     printf '0'
   else
@@ -55,7 +75,7 @@ forbid_regex 'readDataToEndOfFile' '发现无界 readDataToEndOfFile；必须改
 forbid_regex 'standardError[[:space:]]*=[[:space:]]*Pipe\(' '发现未证明会被排空的 stderr Pipe；必须消费或重定向到 nullDevice'
 forbid_regex 'read\(upToCount: self\.maximumReadChunkBytes\)' '发现 app-server 使用 Foundation 定长 pipe 读取；长连接必须使用能立即返回部分数据的 POSIX read'
 
-repeating_timers="$(rg -n 'Timer\.scheduledTimer\(.*repeats: true' Sources/CodexUsageWidget -g '*.swift' || true)"
+repeating_timers="$(search_source 'Timer\.scheduledTimer\(.*repeats: true')"
 if [[ -n "$repeating_timers" ]]; then
   while IFS= read -r timer_line; do
     if [[ "$timer_line" != *'[weak self]'* ]]; then
