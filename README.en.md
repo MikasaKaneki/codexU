@@ -28,7 +28,7 @@ The current Windows x86_64 desktop version ships alongside macOS in the [GitHub 
 - The Windows version reads local data under `%USERPROFILE%\.codex\` and preserves the local-first privacy boundary. It does not upload usage, threads, paths, logs, or account data.
 - The Windows version currently supports Codex only; Claude Code is not supported yet.
 
-Windows v1.4.0 updates actively appended history per file and reads incomplete tails after completion; valid large image and tool records are streamed. Shared pricing uses each turn's model and service tier. Dashboard cost estimates use an `≈` marker with fewer repeated explanations. This release also includes both macOS architectures.
+Windows v1.4.0 updates actively appended history per file and reads incomplete tails after completion; valid large image and tool records are streamed. Shared pricing uses each turn's model and service tier. Dashboard cost estimates use an `≈` marker with fewer repeated explanations. Remaining-quota rings and Leadership tracks add motion, valid main Agents are counted correctly, and Leadership details support today, 7-day and 28-day reports. This release also includes both macOS architectures.
 
 The Windows version is an independent Tauri desktop implementation. The public Windows installers are not code-signed by the repository's default workflow, so Windows may show a security prompt on first launch. Windows and macOS continue to evolve as separate implementations, so their feature coverage is not yet identical.
 
