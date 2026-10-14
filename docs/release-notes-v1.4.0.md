@@ -12,7 +12,7 @@ codexU v1.4.0 统一两平台模型定价，并在 Windows 改进历史刷新、
 
 ## 冻结候选
 
-版本 1.4.0，macOS build 30。四个安装包均来自源码 `0c3b2210ab4fa3ac5879707bf99b390ee77118c6`，由[双平台构建与安装验收任务 38650459768](https://github.com/shanggqm/codexU/actions/runs/38650459768)产出。Windows 程序 SHA-256：`54acccbeeedfe2769c91ea1d238315ccbea70c29f34643a7d52717721479e622`。
+版本 1.4.0，macOS build 30。四个安装包均来自源码 `51e03cc5905a897a6d409f1778ed0f4e81938aea`，由[双平台构建与安装验收任务 38654065193](https://github.com/shanggqm/codexU/actions/runs/38654065193)产出。Windows 程序 SHA-256：`671cfca8363e07e87b96d11c262bca3bd33b1ec1d00fae58541331d2b1518ddf`。
 
 本次最终验收及发布必须复用这批冻结文件，不用 tag 触发的重建包替换已验收字节。
 
@@ -32,8 +32,8 @@ Windows MSI/NSIS 为 **NotSigned**，未做 Authenticode 签名。macOS 为 **ad
 ## 安装包与 SHA-256
 
 ```text
-9ba58e939a947643273c1a38715b2173f4c40be929dfa0670ab3dae658d7ffd4  codexU-1.4.0-mac-arm64.dmg
-33f7cb42b4f3fa3eb92cb92aa21fd231d03cf6c5ed61474243f16b33e9111525  codexU-1.4.0-mac-x86_64.dmg
-72e6be0dd2a7db25b80f0a414f8583af0cf3f0efeac5bcdbbfc2ab5323282259  codexU-1.4.0-windows-x86_64.msi
-0af6ad67c29efbeb62c93959494a2a0862c0538f03a319289b677d83b0660607  codexU-1.4.0-windows-x86_64-setup.exe
+f1bb1d4787d6128d9bb68c50f5e0e720b2e927d8ecf8bcf212d32a47ec96b5ff  codexU-1.4.0-mac-arm64.dmg
+bcc7fe2950e2ad54e7e212695cf65a87190f2a8be9806384ef62632006b66ea7  codexU-1.4.0-mac-x86_64.dmg
+9a0eab17adfbe821a8207ccd2486b454b2ca951b5aa902956c994bb3fc151f69  codexU-1.4.0-windows-x86_64.msi
+89beda76138aa85646372eb92bd48eab327feb99c8ae4932dae1f3bf0d43852f  codexU-1.4.0-windows-x86_64-setup.exe
 ```
