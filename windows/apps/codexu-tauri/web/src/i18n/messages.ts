@@ -74,6 +74,7 @@ const en = {
   },
   tasks: {
     title: 'Tasks',
+    columns: { active: 'Recent activity', pending: 'To continue', scheduled: 'Scheduled', done: 'Archived today' },
     ariaLabel: 'Codex task board',
     unavailable: 'Task status is unavailable until Codex provides local state records.',
     empty: 'No trusted task records yet.',
@@ -376,6 +377,7 @@ const zhHans: MessageShape<typeof en> = {
   },
   tasks: {
     title: '任务',
+    columns: { active: '最近活跃', pending: '待继续', scheduled: '定时', done: '今日归档' },
     ariaLabel: 'Codex 任务面板',
     unavailable: 'Codex 提供本地状态记录前，任务状态不可用。',
     empty: '暂无可信任务记录。',

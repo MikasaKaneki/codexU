@@ -6,11 +6,11 @@ interface TaskBoardPanelProps {
   taskBoard: TaskBoard | null;
 }
 
-const COLUMN_ICONS = {
-  active: CircleDot,
-  pending: Clock3,
-  scheduled: CalendarClock,
-  done: Archive,
+const COLUMNS = {
+  active: { icon: CircleDot, title: 'tasks.columns.active' },
+  pending: { icon: Clock3, title: 'tasks.columns.pending' },
+  scheduled: { icon: CalendarClock, title: 'tasks.columns.scheduled' },
+  done: { icon: Archive, title: 'tasks.columns.done' },
 } as const;
 
 export function TaskBoardPanel({ taskBoard }: TaskBoardPanelProps) {
@@ -45,13 +45,14 @@ export function TaskBoardPanel({ taskBoard }: TaskBoardPanelProps) {
       ) : null}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         {taskBoard.columns.map((column) => {
-          const Icon = COLUMN_ICONS[column.id as keyof typeof COLUMN_ICONS] ?? ClipboardList;
+          const columnUi = COLUMNS[column.id as keyof typeof COLUMNS];
+          const Icon = columnUi?.icon ?? ClipboardList;
           return (
             <section key={column.id} className="rounded-2xl border border-theme bg-surface-inset p-3 min-h-40">
               <div className="flex items-center justify-between gap-2 mb-3">
                 <div className="flex items-center gap-2 min-w-0">
                   <Icon size={15} aria-hidden="true" className="text-secondary shrink-0" />
-                  <h4 className="text-sm font-semibold text-primary truncate">{column.title}</h4>
+                  <h4 className="text-sm font-semibold text-primary truncate">{t(columnUi?.title ?? 'tasks.title')}</h4>
                 </div>
                 <span className="text-xs text-tertiary tabular-nums">{column.count}</span>
               </div>
