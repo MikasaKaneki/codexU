@@ -1,36 +1,18 @@
 # codexU
 
+codexU is a macOS menu bar and desktop app built with Swift for tracking OpenAI Codex / ChatGPT Codex and Claude Code quota, token usage, today's tasks, and local AI leadership. It keeps the information you check most in the menu bar and main window, so you can quickly see remaining quota, reset times, daily progress, and how much AI labor one person is directing.
+
+A [Windows adaptation](docs/WINDOWS.en.md), built with Tauri + Rust, provides a subset of the macOS app’s Codex features. Feature and usage descriptions below focus on the macOS app.
+
 ![codexU v1.2.0 AI Leadership assessment model](docs/screenshot-v1.2.0-ai-leadership.png)
 
 ## A First-of-Its-Kind AI Leadership Assessment Model
-
-codexU v1.4.0 ships macOS and Windows packages together with shared local model pricing and per-turn model attribution. Windows fixes active-history refresh and quota-related disk growth, and simplifies Dashboard labels. Usage and task data stay local.
 
 - **See the AI organization at a glance:** score, 28-day led agents, AI hours, and peak concurrency sit beside a live command-radius orbit driven by today's agents.
 - **No token-based score inflation:** only locally verifiable or derived worker lifecycles, parent-child relationships, concurrency, and autonomous runs count. Unreliable cost, delivery, and estimated intervals stay outside the score.
 - **Codex + Claude Code, evaluated together:** AI leadership represents the complete workforce you direct, without runtime filters or naïve addition of per-project peaks.
 - **Seven memorable ranks:** a fixed 0–100 progression, seven badge identities, and a living orbit turn an explainable score into a recognizable growth marker.
 - **Local and private:** evaluation stays on your Mac and does not upload usage, threads, paths, logs, or account data.
-
-> [!IMPORTANT]
-> **Upgrade to v1.4.0.** This version unifies model pricing across both platforms and includes fixes for Windows active-history refresh and quota-related disk growth. [Download the latest release](https://github.com/shanggqm/codexU/releases/latest).
-
-codexU is a macOS menu bar and desktop app for tracking OpenAI Codex / ChatGPT Codex and Claude Code quota, token usage, today's tasks, and local AI leadership. It keeps the information you check most in the menu bar and main window, so you can quickly see remaining quota, reset times, daily progress, and how much AI labor one person is directing.
-
-## Windows Release
-
-The current Windows x86_64 desktop version ships alongside macOS in the [GitHub v1.4.0 Release](https://github.com/shanggqm/codexU/releases/tag/v1.4.0) as an independent Tauri Dashboard in both MSI and NSIS formats:
-
-- `codexU-1.4.0-windows-x86_64.msi`: Windows Installer package.
-- `codexU-1.4.0-windows-x86_64-setup.exe`: NSIS setup wizard.
-- Windows 10/11 x86_64 is supported; Windows ARM64 is not packaged yet.
-- Verification note: this Windows V0 native visual matrix and shell-lifecycle evidence was collected on a host classified as Windows 11 by build `26200`; Windows 10 remains a supported target but was not observed in this run.
-- The Windows version reads local data under `%USERPROFILE%\.codex\` and preserves the local-first privacy boundary. It does not upload usage, threads, paths, logs, or account data.
-- The Windows version currently supports Codex only; Claude Code is not supported yet.
-
-Windows v1.4.0 updates actively appended history per file and reads incomplete tails after completion; valid large image and tool records are streamed. Shared pricing uses each turn's model and service tier. Dashboard cost estimates use an `≈` marker with fewer repeated explanations. Remaining-quota rings and Leadership tracks add motion, valid main Agents are counted correctly, and Leadership details support today, 7-day and 28-day reports. This release also includes both macOS architectures.
-
-The Windows version is an independent Tauri desktop implementation. The public Windows installers are not code-signed by the repository's default workflow, so Windows may show a security prompt on first launch. Windows and macOS continue to evolve as separate implementations, so their feature coverage is not yet identical.
 
 ![codexU v1.1.0 palette gallery, settings, and main window](docs/screenshot-v1.1.0-palette-gallery.png)
 
@@ -57,7 +39,7 @@ The Windows version is an independent Tauri desktop implementation. The public W
 - Adds a top-level `Codex | Claude Code` switch in the main widget so all panels can switch runtime scope manually.
 - Supports Claude Code local transcript usage, 7-day trends, project rankings, top tools/Skills, and a basic task board.
 - Summarizes token usage for today, the last 7 days, and lifetime totals with uncached input, cached input, and output splits.
-- Estimates the current month's API-equivalent value from OpenAI API token prices and shows progress against Plus, Pro 100, Pro 200, and the full monthly quota value. The bar uses a segmented nonlinear scale, so movement past Pro 200 remains visible and is not a linear dollar ratio.
+- Shows the estimated API-equivalent value of this month's usage and its progress.
 - Leads the overview with a rank emblem and command-radius orbit for rolling 28-day AI leadership. The emblem stays locked to the orbit center, while score, 28-day led agents, 28-day AI hours, and peak concurrency form a 2×2 metric grid; orbit nodes continue to represent today's agents. The unchanged quota rings sit immediately to its right with an explicit Usage label.
 - Adds lower dashboard tabs for today's tasks, AI leadership, usage trend, project ranking, and Skill usage. AI leadership always evaluates the combined Codex and Claude Code workforce; its detail view starts with the full badge path for every rank and places the score directly on the progress track, followed by four headline metrics, four dimensions, a daily AI-hours/agents/peak combo chart, and project contributions.
 - Organizes today's tasks according to each factual source: Codex uses Recent, To continue, Scheduled, and Archived today; Claude Code uses explicit local task states for Active, Pending, Planned, and Completed. Recent activity and archival are not presented as proof of running or success.
@@ -72,14 +54,6 @@ The Windows version is an independent Tauri desktop implementation. The public W
 - Includes a Settings window for Chinese/English UI text, system/light/dark appearance, menu bar content with live preview, always-on-top behavior, close-window behavior, system status, and update check configuration.
 - Checks GitHub Releases for newer versions by default, including beta releases, and offers the DMG that matches the current Mac architecture. It does not silently download or install updates, and automatic checks can be turned off.
 - Reads data locally and does not upload usage, threads, or account data to a third-party service.
-
-## Value progress
-
-macOS and Windows use one packaged local model pricing catalog, including GPT-6 cache-read, cache-write and service-tier rates. Missing prices are explicitly marked as reference estimates. See [shared model pricing](docs/MODEL_PRICING.md) for sources and cache invalidation rules; the app does not fetch prices at runtime.
-
-Value progress estimates the current month's API-equivalent value from locally parsed Codex usage. Each request is priced with its recorded model and service tier, splitting input into ordinary uncached input, cache writes, and cached input before adding output-token cost. Recorded `priority` or `fast` requests use the published Fast mode API rates. Models with long-context pricing use the published long-context rates when one request exceeds 272K input tokens. Reasoning effort is not multiplied separately because reasoning tokens are already included in output usage. Prices come from OpenAI's live [API pricing page](https://developers.openai.com/api/docs/pricing) and the corresponding model pages.
-
-GPT-5.3-Codex-Spark remains a research preview without a final published rate. Spark and unknown models therefore use the GPT-5.5 reference rate and display an `≈` marker instead of being presented as officially priced. The progress endpoint remains a stable reference scale: `200M tokens/day × 30 days`, using a 30% ordinary input / 50% cached input / 20% output mix at about `$7.75 / 1M tokens`, or roughly `$46,500`. The bar is nonlinear after Pro 200, so its width is useful for scanning progress but is not a linear dollar ratio. API-equivalent value is an estimate, not an invoice or rebate.
 
 ## Keyboard Shortcuts
 
@@ -108,6 +82,8 @@ codexU needs access to local Codex data under `~/.codex/`. When Claude Code stat
 
 ## Install
 
+### macOS
+
 Download the DMG for your Mac architecture from GitHub Releases:
 
 - Apple Silicon: `codexU-<version>-mac-arm64.dmg`
@@ -127,9 +103,15 @@ Download a Windows x86_64 installer from the [v1.4.0 Release](https://github.com
 - MSI: `codexU-<version>-windows-x86_64.msi`
 - NSIS: `codexU-<version>-windows-x86_64-setup.exe`
 
-Run the installer and follow its setup wizard. Each installer has a matching `.sha256` checksum file; see [DISTRIBUTION.md](DISTRIBUTION.md) for build, verification, and current release limitations.
+Choose either installer, double-click it, and follow the setup wizard. Install and use Codex locally first so it can generate usage data.
+
+The Windows installers are not code-signed, so Windows may show a security prompt on first launch. Each installer has a matching `.sha256` checksum file. See [DISTRIBUTION.md](DISTRIBUTION.md) for verification instructions.
+
+See the [Windows guide](docs/WINDOWS.en.md) for supported features and contribution links.
 
 ## Requirements
+
+### macOS
 
 - macOS 13 or later.
 - A local Codex installation.
@@ -140,7 +122,7 @@ Run the installer and follow its setup wizard. Each installer has a matching `.s
 
 ### Windows
 
-- Windows 10 or later (x86_64).
+- Windows 10/11 (x86_64). Verified on Windows 11; Windows 10 has not been tested on a physical machine.
 - Codex installed locally, with local data generated under `%USERPROFILE%\.codex\`.
 - The Windows version currently supports Codex only; Windows ARM64 is not currently in the release scope.
 
