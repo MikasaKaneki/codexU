@@ -78,11 +78,11 @@ function Invoke-NsisUninstaller([string]$Directory, [string]$Label) {
 }
 function Get-Baseline([string]$Name, [string]$Hash) {
     $Path = Join-Path $Owned $Name
-    Invoke-WebRequest -Uri "https://github.com/shanggqm/codexU/releases/download/windows-v1.3.3/$Name" -OutFile $Path
+    Invoke-WebRequest -Uri "https://github.com/shanggqm/codexU/releases/download/windows-v1.3.4/$Name" -OutFile $Path
     if ((Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() -ne $Hash) { throw 'Baseline installer checksum mismatch.' }
     return $Path
 }
-$Receipt = [ordered]@{ version = $Version; installer = $Installer; source_sha = $Manifest.source_sha; test_source_sha = $env:GITHUB_SHA; runner = $env:RUNNER_OS; baseline = '1.3.3'; result = 'running'; steps = $Records }
+$Receipt = [ordered]@{ version = $Version; installer = $Installer; source_sha = $Manifest.source_sha; test_source_sha = $env:GITHUB_SHA; runner = $env:RUNNER_OS; baseline = '1.3.4'; result = 'running'; steps = $Records }
 try {
     $Nsis = Join-Path $Packages "codexU-$Version-windows-x86_64-setup.exe"
     $Msi = Join-Path $Packages "codexU-$Version-windows-x86_64.msi"
@@ -90,16 +90,16 @@ try {
         $Checksum = ((Get-Content -Raw -Encoding UTF8 -LiteralPath "$Package.sha256").Trim() -split '\s+')[0]
         if ((Get-FileHash -LiteralPath $Package -Algorithm SHA256).Hash.ToLowerInvariant() -ne $Checksum) { throw 'Candidate checksum mismatch.' }
     }
-    # NSIS: clean installation, uninstall, then a real 1.3.3 -> candidate upgrade.
+    # NSIS: clean installation, uninstall, then a real 1.3.4 -> candidate upgrade.
     if ($Installer -eq 'nsis') {
     $NsisDirectory = Join-Path $Owned 'nsis'
     Invoke-Installer $Nsis @('/S', "/D=$NsisDirectory") 'nsis-clean-install'
     $null = Assert-Installed $NsisDirectory $Version $true
     Invoke-NsisUninstaller $NsisDirectory 'nsis-clean-uninstall'
     Assert-Uninstalled $NsisDirectory
-    $OldNsis = Get-Baseline 'codexU-1.3.3-windows-x86_64-setup.exe' 'c4fdd845ea6bbbda3c622f8c727a36d7555790aa9441631e6918e31cded8e399'
+    $OldNsis = Get-Baseline 'codexU-1.3.4-windows-x86_64-setup.exe' '4559b5c18566885cce2f0da0a8409888dd9e0e994fc895c339c95f8e0337f1a0'
     Invoke-Installer $OldNsis @('/S', "/D=$NsisDirectory") 'nsis-baseline-install'
-    $null = Assert-Installed $NsisDirectory '1.3.3' $false
+    $null = Assert-Installed $NsisDirectory '1.3.4' $false
     $Data = Join-Path $env:APPDATA 'com.codexU.app'
     New-Item -ItemType Directory -Path $Data -Force | Out-Null
     $Marker = Join-Path $Data 'installer-test-preserve.txt'
@@ -118,9 +118,9 @@ try {
     $Entry = Assert-Installed $MsiDirectory $Version $true
     Invoke-Installer 'msiexec.exe' @('/x', $Entry.PSChildName, '/qn', '/norestart') 'msi-clean-uninstall'
     Assert-Uninstalled $MsiDirectory
-    $OldMsi = Get-Baseline 'codexU-1.3.3-windows-x86_64.msi' 'e59e9df4e8d9f5adbd487daf20906176ef99dc1262a98a447eb74a30fe6440de'
+    $OldMsi = Get-Baseline 'codexU-1.3.4-windows-x86_64.msi' 'e49aa0bb44ad1ec7a7170faaa7e5f34d3f03d2c727a5364716bd11de56e8407f'
     Invoke-Installer 'msiexec.exe' @('/i', "`"$OldMsi`"", '/qn', '/norestart', "INSTALLDIR=`"$MsiDirectory`"") 'msi-baseline-install'
-    $OldEntry = Assert-Installed $MsiDirectory '1.3.3' $false
+    $OldEntry = Assert-Installed $MsiDirectory '1.3.4' $false
     $Data = Join-Path $env:APPDATA 'com.codexU.app'
     New-Item -ItemType Directory -Path $Data -Force | Out-Null
     $Marker = Join-Path $Data 'installer-test-preserve.txt'
@@ -143,4 +143,4 @@ try {
     # Runner disposal owns cleanup, including failed partial installations. This
     # script never tries broader deletion or touches a user's local installation.
 }
-Write-Output "Real $Installer clean install, 1.3.3 upgrade, data preservation and uninstall passed for $Version."
+Write-Output "Real $Installer clean install, 1.3.4 upgrade, data preservation and uninstall passed for $Version."

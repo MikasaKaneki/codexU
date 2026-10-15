@@ -4,7 +4,7 @@
 
 ## 全网首推：AI 领导力评估模型
 
-codexU v1.3.2 修复 ChatGPT 升级后的 macOS 额度读取，并通过本地增量索引、首页摘要恢复和过期报告回收改善历史统计加载。继续提供独立 Windows x86_64 Tauri Dashboard，所有用量和任务数据仍在本机处理。
+codexU v1.4.0 同步提供 macOS 和 Windows 安装包，两平台共享本地模型定价与按回合模型归因。Windows 修复活跃历史刷新和额度读取导致的磁盘增长，并精简 Dashboard 文案；所有用量和任务数据仍在本机处理。
 
 - **一眼看懂 AI 组织规模**：主视觉同时展示领导力得分、28 天领导 Agent 数、AI 工时和峰值并发；轨道节点随今日 Agent 动态运行。
 - **不是靠 token 刷分**：只使用本机可验证或可推导的 Agent 生命周期、父子关系、并发与自主运行证据；不可靠的成本、交付和估算区间不进入得分。
@@ -13,7 +13,7 @@ codexU v1.3.2 修复 ChatGPT 升级后的 macOS 额度读取，并通过本地�
 - **本地优先、隐私优先**：评分全程在 Mac 本机完成，不上传 usage、线程、路径、日志或账户数据。
 
 > [!IMPORTANT]
-> **建议升级到 v1.3.2 或更高版本。** v1.3.2 兼容新版 ChatGPT 的内嵌程序布局，修复 macOS 历史缓存回收和完整统计保留问题。[下载最新版本](https://github.com/shanggqm/codexU/releases/latest)。
+> **建议升级到 v1.4.0。** 本版统一两平台模型定价，并包含 Windows 活跃历史刷新及额度读取磁盘增长修复。[下载最新版本](https://github.com/shanggqm/codexU/releases/latest)。
 
 [产品官网](https://shanggqm.github.io/codexU-site/) · [下载最新版本](https://github.com/shanggqm/codexU/releases/latest) · [English](README.en.md)
 
@@ -21,16 +21,16 @@ codexU 是一个 macOS 菜单栏与桌面应用，用来查看 OpenAI Codex / Ch
 
 ## Windows 版本已发布
 
-当前 Windows x86_64 桌面版本随 [GitHub Windows v1.3.4 Release](https://github.com/shanggqm/codexU/releases/tag/windows-v1.3.4) 提供，并包含完整的独立 Tauri Dashboard；安装包提供 MSI 与 NSIS 两种方式：
+当前 Windows x86_64 桌面版本随 [GitHub v1.4.0 Release](https://github.com/shanggqm/codexU/releases/tag/v1.4.0) 与 macOS 一起提供，并包含完整的独立 Tauri Dashboard；安装包提供 MSI 与 NSIS 两种方式：
 
-- `codexU-1.3.4-windows-x86_64.msi`：适合通过 Windows Installer 安装。
-- `codexU-1.3.4-windows-x86_64-setup.exe`：适合通过 NSIS 安装向导安装。
+- `codexU-1.4.0-windows-x86_64.msi`：适合通过 Windows Installer 安装。
+- `codexU-1.4.0-windows-x86_64-setup.exe`：适合通过 NSIS 安装向导安装。
 - 支持 Windows 10/11 x86_64；Windows ARM64 当前尚未打包。
 - 验证环境说明：本轮 Windows V0 的原生视觉矩阵与 shell lifecycle 验收在按 build `26200` 归类的 Windows 11 环境完成；Windows 10 仍是支持目标，但未在本轮实机观测。
 - Windows 版本读取 `%USERPROFILE%\.codex\` 等本机数据，保持本地优先和隐私边界，不上传 usage、线程、路径、日志或账户数据。
 - Windows 版本当前只支持 Codex，暂不支持 Claude Code。
 
-Windows v1.3.4 修复额度刷新触发插件市场下载与磁盘持续增长，并修复历史大记录、Dashboard 显示及设置页版本信息。macOS 仍为 v1.3.2，本次 Windows 更新不重打 macOS 安装包。
+Windows v1.4.0 在持续追加历史时按文件更新统计、随后补读未完成尾部；合法大图片和工具记录采用流式处理。共享定价按每回合记录的模型及服务档位计价，Dashboard 使用 `≈` 标识金额估算，减少逐行重复说明。新增剩余额度环与领导力轨道动效，修复有效主 Agent 漏计，并支持今日、近 7 天和近 28 天的完整领导力详情。本次同时提供 macOS 双架构安装包。
 
 Windows 版本是独立的 Tauri 桌面实现，当前发布包尚未由仓库默认流程进行代码签名；Windows 可能在首次运行时显示安全提示。Windows 与 macOS 的功能实现仍在分别演进，当前功能覆盖并不完全相同。
 
@@ -146,7 +146,7 @@ codexU 需要读取本机 `~/.codex/` 下的 Codex 数据；如果启用 Claude 
 
 ### Windows
 
-从 [Windows Release](https://github.com/shanggqm/codexU/releases/tag/windows-v1.3.4) 下载 Windows x86_64 安装包：
+从 [v1.4.0 Release](https://github.com/shanggqm/codexU/releases/tag/v1.4.0) 下载 Windows x86_64 安装包：
 
 - MSI：`codexU-<version>-windows-x86_64.msi`
 - NSIS：`codexU-<version>-windows-x86_64-setup.exe`
@@ -209,10 +209,10 @@ make release-all
 产物会写入 `dist/`，例如：
 
 ```text
-dist/codexU-1.3.2-mac-arm64.dmg
-dist/codexU-1.3.2-mac-arm64.dmg.sha256
-dist/codexU-1.3.2-mac-x86_64.dmg
-dist/codexU-1.3.2-mac-x86_64.dmg.sha256
+dist/codexU-1.4.0-mac-arm64.dmg
+dist/codexU-1.4.0-mac-arm64.dmg.sha256
+dist/codexU-1.4.0-mac-x86_64.dmg
+dist/codexU-1.4.0-mac-x86_64.dmg.sha256
 ```
 
 Developer ID 签名和 Apple notarization 流程见 [DISTRIBUTION.md](DISTRIBUTION.md)。

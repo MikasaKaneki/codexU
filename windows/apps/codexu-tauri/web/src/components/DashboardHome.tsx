@@ -13,6 +13,7 @@ import { StatCard } from './StatCard';
 import { useI18n } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/messages';
 import { formatQuantity } from '../utils/formatQuantity';
+import { VisualActivityProvider } from '../hooks/useVisualActivity';
 
 interface DashboardHomeProps {
   snapshot: UsageSnapshot | null | undefined;
@@ -84,7 +85,7 @@ export function DashboardHome({ snapshot, quotaSourceLabel, leadershipSignal, on
   };
 
   return (
-    <div className="space-y-4 dashboard-home">
+    <VisualActivityProvider><div className="space-y-4 dashboard-home">
       <div className="dashboard-home-overview">
         <LeadershipOverviewCard
           signal={signal}
@@ -232,6 +233,6 @@ export function DashboardHome({ snapshot, quotaSourceLabel, leadershipSignal, on
           />
         </section>
       )}
-    </div>
+    </div></VisualActivityProvider>
   );
 }

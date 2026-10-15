@@ -11,6 +11,7 @@ mod app_state;
 mod commands;
 mod history_summary;
 mod tray;
+mod visual_power;
 
 use app_state::AppState;
 
@@ -158,6 +159,7 @@ fn main() {
                 .map(|config| config.language.resolved(app_state::ResolvedLanguage::En))
                 .unwrap_or(app_state::ResolvedLanguage::En);
             app.manage(state.clone());
+            app.manage(visual_power::VisualPower::new(app.handle().clone()));
 
             // Hide main window to tray on close instead of quitting.
             if let Some(window) = app.get_webview_window("main") {
@@ -193,9 +195,17 @@ fn main() {
             commands::settings::open_settings_window,
             commands::settings::sync_runtime_language,
             tray_show_main_window,
+            visual_power::get_visual_power_save,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            if let tauri::RunEvent::Exit = event {
+                if let Some(power) = app.try_state::<visual_power::VisualPower>() {
+                    power.shutdown();
+                }
+            }
+        });
 }
 
 #[tauri::command]

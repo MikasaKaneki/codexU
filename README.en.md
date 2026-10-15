@@ -4,7 +4,7 @@
 
 ## A First-of-Its-Kind AI Leadership Assessment Model
 
-codexU v1.3.2 restores macOS quota reads after the ChatGPT upgrade and improves history loading with local incremental indexing, bounded home summaries, and expired report cleanup. The independent Windows x86_64 Tauri Dashboard remains available; usage and task data stay local.
+codexU v1.4.0 ships macOS and Windows packages together with shared local model pricing and per-turn model attribution. Windows fixes active-history refresh and quota-related disk growth, and simplifies Dashboard labels. Usage and task data stay local.
 
 - **See the AI organization at a glance:** score, 28-day led agents, AI hours, and peak concurrency sit beside a live command-radius orbit driven by today's agents.
 - **No token-based score inflation:** only locally verifiable or derived worker lifecycles, parent-child relationships, concurrency, and autonomous runs count. Unreliable cost, delivery, and estimated intervals stay outside the score.
@@ -13,22 +13,22 @@ codexU v1.3.2 restores macOS quota reads after the ChatGPT upgrade and improves 
 - **Local and private:** evaluation stays on your Mac and does not upload usage, threads, paths, logs, or account data.
 
 > [!IMPORTANT]
-> **Upgrade to v1.3.2 or later.** v1.3.2 supports the new bundled ChatGPT CLI layout and fixes macOS history-cache cleanup and preservation of complete statistics. [Download the latest release](https://github.com/shanggqm/codexU/releases/latest).
+> **Upgrade to v1.4.0.** This version unifies model pricing across both platforms and includes fixes for Windows active-history refresh and quota-related disk growth. [Download the latest release](https://github.com/shanggqm/codexU/releases/latest).
 
 codexU is a macOS menu bar and desktop app for tracking OpenAI Codex / ChatGPT Codex and Claude Code quota, token usage, today's tasks, and local AI leadership. It keeps the information you check most in the menu bar and main window, so you can quickly see remaining quota, reset times, daily progress, and how much AI labor one person is directing.
 
 ## Windows Release
 
-The current Windows x86_64 desktop version is available in the [GitHub Windows v1.3.4 Release](https://github.com/shanggqm/codexU/releases/tag/windows-v1.3.4) as an independent Tauri Dashboard in both MSI and NSIS formats:
+The current Windows x86_64 desktop version ships alongside macOS in the [GitHub v1.4.0 Release](https://github.com/shanggqm/codexU/releases/tag/v1.4.0) as an independent Tauri Dashboard in both MSI and NSIS formats:
 
-- `codexU-1.3.4-windows-x86_64.msi`: Windows Installer package.
-- `codexU-1.3.4-windows-x86_64-setup.exe`: NSIS setup wizard.
+- `codexU-1.4.0-windows-x86_64.msi`: Windows Installer package.
+- `codexU-1.4.0-windows-x86_64-setup.exe`: NSIS setup wizard.
 - Windows 10/11 x86_64 is supported; Windows ARM64 is not packaged yet.
 - Verification note: this Windows V0 native visual matrix and shell-lifecycle evidence was collected on a host classified as Windows 11 by build `26200`; Windows 10 remains a supported target but was not observed in this run.
 - The Windows version reads local data under `%USERPROFILE%\.codex\` and preserves the local-first privacy boundary. It does not upload usage, threads, paths, logs, or account data.
 - The Windows version currently supports Codex only; Claude Code is not supported yet.
 
-Windows v1.3.4 fixes plugin marketplace downloads and disk growth during quota refresh, oversized history records, Dashboard edge cases, and the application version shown in Settings. macOS remains at v1.3.2; this Windows release does not rebuild macOS installers.
+Windows v1.4.0 updates actively appended history per file and reads incomplete tails after completion; valid large image and tool records are streamed. Shared pricing uses each turn's model and service tier. Dashboard cost estimates use an `≈` marker with fewer repeated explanations. Remaining-quota rings and Leadership tracks add motion, valid main Agents are counted correctly, and Leadership details support today, 7-day and 28-day reports. This release also includes both macOS architectures.
 
 The Windows version is an independent Tauri desktop implementation. The public Windows installers are not code-signed by the repository's default workflow, so Windows may show a security prompt on first launch. Windows and macOS continue to evolve as separate implementations, so their feature coverage is not yet identical.
 
@@ -122,7 +122,7 @@ After installation, codexU checks GitHub Releases for new versions at most once 
 
 ### Windows
 
-Download a Windows x86_64 installer from the [Windows Release](https://github.com/shanggqm/codexU/releases/tag/windows-v1.3.4):
+Download a Windows x86_64 installer from the [v1.4.0 Release](https://github.com/shanggqm/codexU/releases/tag/v1.4.0):
 
 - MSI: `codexU-<version>-windows-x86_64.msi`
 - NSIS: `codexU-<version>-windows-x86_64-setup.exe`
@@ -185,10 +185,10 @@ make release-all
 Release artifacts are written to `dist/`, for example:
 
 ```text
-dist/codexU-1.3.2-mac-arm64.dmg
-dist/codexU-1.3.2-mac-arm64.dmg.sha256
-dist/codexU-1.3.2-mac-x86_64.dmg
-dist/codexU-1.3.2-mac-x86_64.dmg.sha256
+dist/codexU-1.4.0-mac-arm64.dmg
+dist/codexU-1.4.0-mac-arm64.dmg.sha256
+dist/codexU-1.4.0-mac-x86_64.dmg
+dist/codexU-1.4.0-mac-x86_64.dmg.sha256
 ```
 
 For Developer ID signing and notarization, see [DISTRIBUTION.md](DISTRIBUTION.md).

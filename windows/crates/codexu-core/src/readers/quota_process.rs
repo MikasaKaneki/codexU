@@ -108,27 +108,74 @@ fn resume_primary_thread(pid: u32) -> anyhow::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::process::Stdio;
+    use std::{io::Write, process::Stdio};
     use tokio::io::{AsyncBufReadExt, BufReader};
     use windows_sys::Win32::System::Threading::{
         OpenProcess, WaitForSingleObject, PROCESS_SYNCHRONIZE,
     };
 
+    const FIXTURE_ROLE: &str = "CODEXU_QUOTA_PROCESS_TEST_ROLE";
+    const DESCENDANT_PID: &str = "CODEXU_TEST_DESCENDANT_PID=";
+
+    fn fixture_command(role: &str) -> Command {
+        let test_name = format!(
+            "{}::process_fixture",
+            module_path!().split_once("::").unwrap().1
+        );
+        let mut command = Command::new(std::env::current_exe().unwrap());
+        command
+            .args(["--exact", &test_name, "--nocapture", "--test-threads=1"])
+            .env(FIXTURE_ROLE, role)
+            .creation_flags(CREATE_NO_WINDOW);
+        command
+    }
+
+    // Re-enter this test binary so readiness measures process ownership without
+    // depending on PowerShell startup, profiles, or its Start-Process cmdlet.
+    #[test]
+    fn process_fixture() {
+        let Ok(role) = std::env::var(FIXTURE_ROLE) else {
+            return;
+        };
+        match role.as_str() {
+            "tree" => {
+                let descendant = fixture_command("leaf")
+                    .stdin(Stdio::null())
+                    .stdout(Stdio::null())
+                    .stderr(Stdio::null())
+                    .as_std_mut()
+                    .spawn()
+                    .unwrap();
+                println!("{DESCENDANT_PID}{}", descendant.id());
+                std::io::stdout().flush().unwrap();
+                std::thread::sleep(std::time::Duration::from_secs(60));
+            }
+            "leaf" => std::thread::sleep(std::time::Duration::from_secs(60)),
+            "eof" => {
+                std::io::copy(&mut std::io::stdin().lock(), &mut std::io::sink()).unwrap();
+            }
+            _ => panic!("Unexpected process fixture role"),
+        }
+    }
+
     async fn process_tree() -> (Child, OwnedHandle, OwnedHandle) {
-        let mut command = Command::new("powershell.exe");
-        command.args(["-NoProfile", "-NonInteractive", "-Command",
-            "$p = Start-Process powershell.exe -WindowStyle Hidden -ArgumentList '-NoProfile -NonInteractive -Command Start-Sleep -Seconds 60' -PassThru; [Console]::WriteLine($p.Id); [Console]::Out.Flush(); Start-Sleep -Seconds 60"])
-            .stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::null());
+        let mut command = fixture_command("tree");
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null());
         let (mut child, job) = spawn(&mut command).unwrap();
         let mut output = BufReader::new(child.stdout.take().unwrap()).lines();
-        let pid: u32 = tokio::time::timeout(std::time::Duration::from_secs(10), output.next_line())
-            .await
-            .unwrap()
-            .unwrap()
-            .unwrap()
-            .trim()
-            .parse()
-            .unwrap();
+        let pid = tokio::time::timeout(std::time::Duration::from_secs(10), async {
+            while let Some(line) = output.next_line().await.unwrap() {
+                if let Some((_, pid)) = line.split_once(DESCENDANT_PID) {
+                    return pid.trim().parse::<u32>().unwrap();
+                }
+            }
+            panic!("Process fixture exited before reporting its descendant");
+        })
+        .await
+        .expect("Process fixture did not report its descendant within 10 seconds");
         let handle = unsafe { OpenProcess(PROCESS_SYNCHRONIZE, 0, pid) };
         assert!(!handle.is_null());
         (child, job, unsafe { OwnedHandle::from_raw_handle(handle) })
@@ -136,16 +183,12 @@ mod tests {
 
     #[tokio::test]
     async fn dropping_job_kills_descendants_without_touching_other_processes() {
-        let mut unrelated = Command::new("powershell.exe");
+        let mut unrelated = fixture_command("leaf");
         unrelated
-            .args([
-                "-NoProfile",
-                "-NonInteractive",
-                "-Command",
-                "Start-Sleep -Seconds 60",
-            ])
-            .kill_on_drop(true)
-            .creation_flags(CREATE_NO_WINDOW);
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .kill_on_drop(true);
         let mut unrelated = unrelated.spawn().unwrap();
         let (mut child, job, descendant) = process_tree().await;
         drop(job);
@@ -176,14 +219,8 @@ mod tests {
 
     #[tokio::test]
     async fn stdin_eof_allows_normal_exit() {
-        let mut command = Command::new("powershell.exe");
+        let mut command = fixture_command("eof");
         command
-            .args([
-                "-NoProfile",
-                "-NonInteractive",
-                "-Command",
-                "[Console]::In.ReadToEnd() | Out-Null",
-            ])
             .stdin(Stdio::piped())
             .stdout(Stdio::null())
             .stderr(Stdio::null());

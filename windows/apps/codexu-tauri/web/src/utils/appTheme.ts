@@ -47,6 +47,8 @@ const applyPaletteVariables = (theme: ThemeMode, paletteId: PaletteId) => {
   root.style.setProperty('--accent-secondary', palette.accent.secondary);
   root.style.setProperty('--accent-strong', palette.accent.primaryStrong);
   root.style.setProperty('--accent-light', palette.accent.primaryLight);
+  root.style.setProperty('--accent-highlight', palette.accent.highlight);
+  root.style.setProperty('--accent-secondary-strong', palette.accent.secondaryStrong);
 
   root.style.setProperty('--quota-primary-start', palette.quota.primary.start);
   root.style.setProperty('--quota-primary-end', palette.quota.primary.end);

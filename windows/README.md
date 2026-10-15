@@ -5,6 +5,10 @@
 - Rust reader 读取本机 Codex transcript、`state_5.sqlite` 和 automation 元数据
 - Tauri IPC、额度状态、用量、推理性能、任务、项目、Skills 和 AI Leadership Dashboard
 - 中英文设置、Light/Dark/System 外观和六套语义 palette catalog
+- Leadership 每日摘要与趋势方向随界面语言切换；中文保留 Agent 术语，并使用“AI 工时”“峰值并发”和“上升/下降”。
+- 首页按 macOS 的单环或同心双环展示剩余额度，沿弧流光带点状拖尾；颜色标识额度窗口，环下保留重置时间，第三个返回窗口单独展示
+- 正常额度不常驻“官方”成功胶囊，悬停额度标题可查看来源；旧值标为“上次结果”，读取与失败仍明确提示。
+- Leadership 指挥半径按等级显示一至三层轨道、今日 Agent 节点及呼吸光晕；仅窗口活动且图形可见时挂载动画，失焦、隐藏、减少动态效果或 Windows 系统省电时移除动画
 - Windows 原生 exact-HWND、后台不抢前台的视觉采集 workflow
 
 ## Windows Dashboard showcase
@@ -95,7 +99,7 @@ cargo test --release -p codexu-core --test incremental_history_scale -- --ignore
 
 ## 安装（推荐）
 
-Windows 用户可以直接打开[Windows v1.3.4 Release](https://github.com/shanggqm/codexU/releases/tag/windows-v1.3.4)，在
+Windows 用户可以直接打开[v1.4.0 Release](https://github.com/shanggqm/codexU/releases/tag/v1.4.0)，在
 Assets 中下载带有 `-setup.exe` 后缀的 NSIS 安装包：
 
 1. 下载 `codexU-<version>-windows-x86_64-setup.exe`。

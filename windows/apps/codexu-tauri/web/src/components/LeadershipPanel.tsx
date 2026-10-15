@@ -9,7 +9,7 @@ import {
   ShieldQuestion,
   TrendingUp,
 } from 'lucide-react';
-import { type CSSProperties, type ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import type {
   CodexLeadershipSignal,
   LeadershipDayPoint,
@@ -20,6 +20,7 @@ import type {
 import { LEADERSHIP_BANDS, type LeadershipBand, resolveLeadershipBand } from '../utils/leadershipTitles';
 import { useI18n } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/messages';
+import { LeadershipCommandGraphic } from './LeadershipCommandGraphic';
 
 interface LeadershipPanelProps {
   signal: CodexLeadershipSignal | null;
@@ -68,7 +69,8 @@ export function LeadershipOverviewCard({
   onOpen: () => void;
 }) {
   const { t, language } = useI18n();
-  const report = signal ? getReportFromSignal(signal) : null;
+  const report = signal?.report?.reports.find(item => item.period === 'twentyEightDays') ?? null;
+  const todayAgents = signal?.report?.reports.find(item => item.period === 'today')?.agent_count ?? null;
   const score = signal?.score ?? null;
   const evidenceRatio = signal?.evidence_coverage ?? 0;
   const activeBand = resolveLeadershipBand(score, evidenceRatio, signal?.active_day_count ?? 0);
@@ -101,11 +103,9 @@ export function LeadershipOverviewCard({
           activeBand={activeBand}
           hasSignal={hasSignal}
           showScore={false}
+          showTitle
+          agentCount={todayAgents}
         />
-        <div className="leadership-overview-identity">
-          <strong>{title}</strong>
-          <span>{hasSignal && activeBand ? t('leadership.bandLabel') : hasUsage ? t('leadership.recordInsufficient') : t('leadership.noSnapshot')}</span>
-        </div>
       </div>
       <div className="leadership-overview-facts">
         <OverviewFact icon={<Brain size={13} />} label={t('leadership.score')} value={formatScore(hasSignal ? scoreForVisual : null)} />
@@ -118,32 +118,43 @@ export function LeadershipOverviewCard({
 }
 
 export function LeadershipPanel({ signal }: LeadershipPanelProps) {
+  const { t } = useI18n();
+  const [period, setPeriod] = useState('twentyEightDays');
+  const report = signal?.report?.reports.find(item => item.period === period) ?? null;
+
+  return (
+    <div className="space-y-6">
+      <div className="leadership-period-switcher" role="group" aria-label={t('leadership.periodSelector')}>
+        {['today', 'sevenDays', 'twentyEightDays'].map(item => (
+          <button
+            key={item}
+            type="button"
+            aria-pressed={period === item}
+            className={period === item ? 'glass-button-solid' : 'glass-button'}
+            onClick={() => setPeriod(item)}
+          >
+            {formatPeriod(item, t)}
+          </button>
+        ))}
+      </div>
+      {signal && report ? <LeadershipReportDetails signal={signal} report={report} /> : (
+        <section className="glass-panel p-6 sm:p-7 space-y-3" role="status">
+          <h2 className="text-lg font-semibold text-primary">{t('leadership.title')}</h2>
+          <p className="text-sm text-secondary">
+            {signal
+              ? t('leadership.reportNotReady', { period: formatPeriod(period, t) })
+              : t('leadership.noSnapshotDetail')}
+          </p>
+        </section>
+      )}
+    </div>
+  );
+}
+
+function LeadershipReportDetails({ signal, report }: { signal: CodexLeadershipSignal; report: LeadershipReport }) {
   const { t, language } = useI18n();
-  if (!signal) {
-    return (
-      <section className="glass-panel p-6 sm:p-7 space-y-3">
-        <h2 className="text-lg font-semibold text-primary">{t('leadership.title')}</h2>
-        <p className="text-sm text-secondary">
-          {t('leadership.noSnapshotDetail')}
-        </p>
-      </section>
-    );
-  }
-
-  const report = getReportFromSignal(signal);
-  if (!report) {
-    return (
-      <section className="glass-panel p-6 sm:p-7 space-y-3">
-        <h2 className="text-lg font-semibold text-primary">{t('leadership.title')}</h2>
-        <p className="text-sm text-secondary">
-          {t('leadership.reportNotReady', { period: formatPeriod(signal.period, t) })}
-        </p>
-      </section>
-    );
-  }
-
-  const score = signal.score;
-  const evidenceRatio = Number.isFinite(signal.evidence_coverage) ? signal.evidence_coverage : 0;
+  const score = report.score;
+  const evidenceRatio = Number.isFinite(report.evidence_coverage) ? report.evidence_coverage : 0;
   const activeBand = resolveLeadershipBand(score, evidenceRatio, report.active_day_count);
   const hasSignal = score !== null && activeBand !== null;
   const confidence = Math.max(0, Math.min(100, Math.round(evidenceRatio * 100)));
@@ -177,11 +188,12 @@ export function LeadershipPanel({ signal }: LeadershipPanelProps) {
               activeBand={activeBand}
               hasSignal={hasSignal}
               showScore={false}
+              agentCount={signal.report?.reports.find(item => item.period === 'today')?.agent_count ?? null}
             />
             <div className="leadership-identity-copy">
               <div className="leadership-identity-eyebrow">
                 <span>{t('leadership.title')}</span>
-                <span className="leadership-period-badge">{t('leadership.period')}</span>
+                <span className="leadership-period-badge">{formatPeriod(report.period, t)}</span>
               </div>
               <h2 className="leadership-identity-title">
                 {hasSignal && activeBand
@@ -275,8 +287,12 @@ export function LeadershipPanel({ signal }: LeadershipPanelProps) {
             <div className="mt-4 p-3 rounded-lg border border-theme bg-surface-inset text-sm">
               <p className="text-primary font-medium">{t('leadership.latestDaySignal')}</p>
               <p className="text-xs text-secondary mt-1">
-                {formatPointDate(latest.day)} | {latest.agent_count} agents, {latest.ai_hours.toFixed(1)}h AI hours,
-                peak {latest.peak_concurrency}
+                {t('leadership.latestDayFacts', {
+                  date: formatPointDate(latest.day),
+                  agents: latest.agent_count,
+                  hours: latest.ai_hours.toFixed(1),
+                  peak: latest.peak_concurrency,
+                })}
               </p>
             </div>
           ) : (
@@ -331,7 +347,7 @@ export function LeadershipPanel({ signal }: LeadershipPanelProps) {
         <div className="glass-panel p-5">
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp size={16} className="text-secondary" />
-            <h3 className="text-sm font-semibold text-primary">{t('leadership.trendSnapshot')}</h3>
+            <h3 className="text-sm font-semibold text-primary">{t('leadership.trendSnapshot', { period: formatPeriod(report.period, t) })}</h3>
           </div>
           {report.daily_points.length === 0 ? (
             <p className="text-sm text-secondary">{t('leadership.noTrendPoints')}</p>
@@ -353,7 +369,7 @@ export function LeadershipPanel({ signal }: LeadershipPanelProps) {
           {trend ? (
             <p className="text-xs text-secondary mt-1">
               {t('leadership.momentum', {
-                direction: trend.direction === 'up' ? 'up' : 'down',
+                direction: t(trend.direction === 'up' ? 'leadership.momentumUp' : 'leadership.momentumDown'),
                 delta: `${trend.delta >= 0 ? '+' : ''}${trend.delta.toFixed(2)}`,
               })}
             </p>
@@ -369,39 +385,32 @@ export function LeadershipOrbit({
   hasSignal,
   activeBand,
   showScore = true,
+  showTitle = false,
+  agentCount = null,
 }: {
   score: number;
   hasSignal: boolean;
   activeBand: LeadershipBand | null;
   showScore?: boolean;
+  showTitle?: boolean;
+  agentCount?: number | null;
 }) {
-  const { t } = useI18n();
-  const radius = 56;
-  const circumference = Math.round(2 * Math.PI * radius);
+  const { t, language } = useI18n();
   const safeScore = hasSignal ? clampPercent(score) : 0;
-  const dashOffset = circumference - (safeScore / 100) * circumference;
 
   return (
     <div className="leadership-orbit-wrap">
-      <div className="leadership-orbit" role="img" aria-label={t('leadership.orbit')}>
+      <div className="leadership-orbit" role="img" aria-label={agentCount == null ? t('leadership.orbit') : t('leadership.commandRadius', { value: agentCount })}
+        title={agentCount == null ? undefined : t('leadership.commandRadius', { value: agentCount })}>
+        <LeadershipCommandGraphic level={hasSignal ? activeBand?.level ?? 0 : 0} agentCount={agentCount} />
         {hasSignal && activeBand ? (
             <img src={activeBand.badge} alt={t('leadership.badge')} className="leadership-orbit-badge" />
         ) : (
           <ShieldQuestion size={40} className="leadership-orbit-neutral-icon" />
         )}
-        <svg viewBox="0 0 140 140" className="leadership-orbit-ring">
-          <circle cx="70" cy="70" r={radius} className="orbit-track" fill="none" />
-          {hasSignal ? (
-            <circle
-              cx="70"
-              cy="70"
-              r={radius}
-              className="orbit-value"
-              strokeDasharray={circumference}
-              strokeDashoffset={dashOffset}
-            />
-          ) : null}
-        </svg>
+        {showTitle ? <span className={`leadership-command-plaque ${!hasSignal ? 'leadership-command-plaque-empty' : ''}`}>
+          {hasSignal && activeBand ? `L${activeBand.level} · ${bandName(activeBand, language)}` : t('leadership.recordBuilding')}
+        </span> : null}
       </div>
       {showScore ? (
         <div className={`leadership-orbit-score ${!hasSignal ? 'leadership-orbit-score-empty' : ''}`}>
@@ -516,12 +525,6 @@ export function LeadershipCommandRail({
       {railContent}
     </button>
   );
-}
-
-function getReportFromSignal(signal: CodexLeadershipSignal): LeadershipReport | null {
-  if (!signal.report) return null;
-  const byPeriod = signal.report.reports.find((item) => item.period === signal.period);
-  return byPeriod ?? signal.report.reports[0] ?? null;
 }
 
 function bandName(band: LeadershipBand, language: 'zh-Hans' | 'en'): string {

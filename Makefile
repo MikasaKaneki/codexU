@@ -127,6 +127,7 @@ test-palettes:
 
 memory-risk-check:
 	./scripts/check-memory-risks.sh
+	./scripts/test-memory-risk-gate.sh
 
 phase-one-check: build
 	./scripts/phase-one-check.sh

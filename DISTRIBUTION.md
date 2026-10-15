@@ -71,7 +71,7 @@ This creates the DMG and a `SHA-256` checksum file next to it.
 The Windows package uses Tauri's MSI and NSIS targets. Run this on a Windows machine or Windows CI runner with Rust, rustup, Node.js, and npm installed:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1 -Version 1.3.2
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows-release.ps1 -Version 1.4.0
 ```
 
 The script pins the MSVC Rust toolchain, runs the Windows workspace tests and frontend build, builds both installers, and writes these files under `dist/windows/`:
@@ -88,7 +88,7 @@ The current Tauri configuration uses the WebView2 download bootstrapper. The Win
 The repository target is also available as:
 
 ```sh
-make release-windows VERSION=1.3.2
+make release-windows VERSION=1.4.0
 ```
 
 ## Deterministic release verification
@@ -100,7 +100,7 @@ make memory-risk-check
 sed -n '1,240p' build/memory-risk/report.md
 ```
 
-This mandatory gate scans the full production source tree for unbounded stream reads, app-server pipe reads that wait for a full fixed-size buffer instead of returning partial responses, process-pipe lifecycle errors, repeating callback retention, missing observer cleanup, unbounded caches or pending-request collections, and parent-path traversal without explicit root termination or cycle guards. Review the generated inventory before continuing. A failure blocks all later release work and must not be bypassed.
+This mandatory gate requires ripgrep (`rg`) and scans the full production source tree for unbounded stream reads, app-server pipe reads that wait for a full fixed-size buffer instead of returning partial responses, process-pipe lifecycle errors, repeating callback retention, missing observer cleanup, unbounded caches or pending-request collections, and parent-path traversal without explicit root termination or cycle guards. Missing tools or scan errors fail the gate; they are never treated as zero matches. The Make target also checks these failure paths, and the macOS release runner installs ripgrep explicitly. Review the generated inventory before continuing. A failure blocks all later release work and must not be bypassed.
 
 ```sh
 make release-package
@@ -132,6 +132,10 @@ gh workflow run release-packages.yml --ref <source-branch> -f version=<version> 
 
 Download the Windows artifact, combine it with the locally verified macOS DMGs, fill all four hashes into the release notes, and run both `make release-cross-platform-check` and `make release-check`. Then commit the final release metadata, push `main` and the annotated tag. Tag builds run both platforms and the final Ubuntu checksum aggregation; a manual dispatch defaults to `platform=all`.
 
+From a Windows host, dispatch `platform=all` on the reviewed candidate branch to build both macOS architectures and Windows installers. The manual dual-platform route also runs MSI/NSIS clean installation, upgrade and uninstall checks in separate disposable Windows runners. The macOS package wrapper probes normal and large valid Claude metadata/Skill files, checks complete usage/task results and records native peak RSS using synthetic data; it does not introduce an application file-size rejection policy.
+
+After recording the four real hashes in the release notes, dispatch the same workflow with `platform=all` and `candidate_run=<original-run-id>`. It downloads the original packages instead of rebuilding them. The macOS job verifies that production and packaging sources match the candidate manifest and runs `make release-check`; Windows installation checks bind their executable hashes to the original manifest. Verify every job before creating the release commit/tag. macOS acceptance evidence is retained as a separate artifact. Documentation can change between these phases; production and packaging sources cannot.
+
 ```sh
 make release-cross-platform-check VERSION=<version>
 ```
@@ -154,7 +158,7 @@ Generate the concise public body with the existing `make-github-release-body.sh`
 
 Verify the tag commit, public Release state/body and all four uploaded asset hashes. The default Windows installers are unsigned; do not claim Authenticode signing or native install acceptance without executing those checks. This route does not replace the user's local installation or modify macOS release assets; disposable runner installations are acceptance tests.
 
-The Windows-only dispatch exercises the actual MSI and NSIS installers in separate disposable Windows runners so their remembered install directories cannot affect each other: clean installation, uninstall, upgrade from the published Windows 1.3.3 baseline, unchanged application-data fixture, installed executable hash, and removal of old registration. `scripts/test-windows-installers.ps1` refuses local and self-hosted execution. Candidate artifacts are retained before installation testing for diagnosis; a failed installation check blocks release publication. Each installer has a separate evidence artifact with its receipt and MSI logs. To re-test unchanged bytes after a test-script correction, supply `candidate_run` with the original build run ID: the manifest binds source and program SHA-256, and the test rejects changes to product or packaging source. This does not establish logged-in quota behavior: verify the exact packaged application locally with isolated application settings/cache and the real local CLI before publishing quota lifecycle fixes. Never upload a user's account credentials or session history to the runner.
+The manual dispatch exercises the actual MSI and NSIS installers in separate disposable Windows runners so their remembered install directories cannot affect each other: clean installation, uninstall, upgrade from the published Windows 1.3.4 baseline, unchanged application-data fixture, installed executable hash, and removal of old registration. `scripts/test-windows-installers.ps1` refuses local and self-hosted execution. Candidate artifacts are retained before installation testing for diagnosis; a failed installation check blocks release publication. Each installer has a separate evidence artifact with its receipt and MSI logs. To re-test unchanged bytes after a test-script correction, supply `candidate_run` with the original build run ID: the manifest binds source and program SHA-256, and the test rejects changes to product or packaging source. This does not establish logged-in quota behavior: verify the exact packaged application locally with isolated application settings/cache and the real local CLI before publishing quota lifecycle fixes. Never upload a user's account credentials or session history to the runner.
 
 ## Developer ID signed build
 

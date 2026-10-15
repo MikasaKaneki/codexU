@@ -122,7 +122,7 @@ export function createVisualFixture() {
         report: {
           model_version: 'fixture-v1',
           refreshed_at: now,
-          reports: [leadershipReport(now)],
+          reports: [leadershipReport(now), { ...leadershipReport(now), period: 'today', agent_count: 6 }],
         },
       },
       messages: [],

@@ -21,6 +21,8 @@
   --accent-secondary: #8b6dff;
   --accent-strong: #1f59ed;
   --accent-light: #7ba0ff;
+  --accent-highlight: #daa3fa;
+  --accent-secondary-strong: #6d45e8;
   --surface: #ffffff;
   --surface-elevated: rgba(255, 255, 255, 0.8);
   --surface-elevated-strong: rgba(255, 255, 255, 0.94);
@@ -57,6 +59,7 @@
   --ornament-secondary: #8b6dff;
   --ornament-highlight: #ffffff;
   --ornament-metal: #d2b27b;
+  --data-flow-particle: #ffffff;
   --shadow-soft: 0 16px 42px -30px rgba(15, 23, 42, 0.33);
 }
 
@@ -227,7 +230,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 0.6rem;
+    gap: 0.65rem;
     color: var(--text-primary);
     text-align: center;
     cursor: pointer;
@@ -272,40 +275,14 @@ body {
     gap: 0.05rem;
   }
 
-  .leadership-overview-card .leadership-orbit,
-  .leadership-overview-card .leadership-orbit-ring {
-    width: 118px;
-    height: 118px;
+  .leadership-overview-card .leadership-orbit {
+    width: 145px;
+    height: 145px;
   }
 
   .leadership-overview-card .leadership-orbit-badge {
-    width: 70px;
-    height: 70px;
-  }
-
-  .leadership-overview-identity {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 0;
-    gap: 0.12rem;
-  }
-
-  .leadership-overview-identity strong {
-    color: var(--text-primary);
-    font-size: 0.84rem;
-    font-weight: 750;
-    line-height: 1.15;
-  }
-
-  .leadership-overview-identity span {
-    max-width: 100%;
-    overflow: hidden;
-    color: var(--text-tertiary);
-    font-size: 0.64rem;
-    line-height: 1.15;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    width: 58px;
+    height: 58px;
   }
 
   .leadership-overview-facts {
@@ -373,8 +350,7 @@ body {
     flex: 0 0 auto;
   }
 
-  .leadership-identity-card .leadership-orbit,
-  .leadership-identity-card .leadership-orbit-ring {
+  .leadership-identity-card .leadership-orbit {
     width: 112px;
     height: 112px;
   }
@@ -454,25 +430,55 @@ body {
     gap: 0.22rem;
   }
 
-  .leadership-orbit-ring {
-    width: 132px;
-    height: 132px;
-    transform: rotate(-90deg);
+  .leadership-command-graphic {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .leadership-command-graphic svg {
+    width: 100%;
+    height: 100%;
     overflow: visible;
   }
-
-  .orbit-track {
-    stroke: color-mix(in oklab, var(--text-tertiary) 18%, transparent);
-    stroke-width: 8;
-    stroke-linecap: round;
+  .leadership-command-glow,
+  .leadership-command-breath {
+    filter: blur(4.2px);
+    opacity: 0.19;
   }
-
-  .orbit-value {
-    stroke: color-mix(in oklab, var(--accent) 65%, var(--text-secondary));
-    stroke-width: 8;
-    stroke-linecap: round;
-    fill: none;
-    transition: stroke-dashoffset 240ms ease;
+  .leadership-command-breath {
+    animation: leadership-breath 3.8s ease-in-out infinite;
+  }
+  .leadership-command-nodes-moving,
+  .leadership-command-flow {
+    transform-origin: 50% 50%;
+    animation: leadership-orbit var(--orbit-duration) linear infinite var(--orbit-direction);
+  }
+  .leadership-command-plaque {
+    position: absolute;
+    top: calc(50% + 25px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 112px;
+    height: 22px;
+    padding: 0 6px;
+    border: 1px solid color-mix(in oklab, var(--accent) 56%, transparent);
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--text-primary) 78%, var(--surface));
+    color: var(--data-flow-particle);
+    font-size: 0.625rem;
+    font-weight: 750;
+    line-height: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: var(--shadow-soft);
+  }
+  .dark .leadership-command-plaque {
+    background: color-mix(in oklab, var(--surface) 92%, transparent);
+  }
+  .leadership-command-plaque-empty {
+    background: var(--surface-inset);
+    color: var(--text-secondary);
   }
 
   .leadership-orbit-score {
@@ -492,6 +498,7 @@ body {
     width: 78px;
     height: 78px;
     object-fit: contain;
+    filter: drop-shadow(0 2px 5px color-mix(in oklab, var(--accent) 18%, transparent));
     border-radius: 999px;
     box-shadow: 0 0 0 1px color-mix(in oklab, var(--surface-elevated-strong) 60%, transparent);
   }
@@ -728,6 +735,7 @@ body {
     align-items: flex-start;
     justify-content: space-between;
     gap: 0.65rem;
+    height: 20px;
   }
 
   .dashboard-overview-heading {
@@ -786,12 +794,6 @@ body {
     text-align: right;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .dashboard-overview-status-confirmed {
-    border-color: color-mix(in oklab, var(--status-ok) 32%, var(--border));
-    color: var(--status-ok);
-    background: color-mix(in oklab, var(--status-ok) 9%, var(--surface-inset));
   }
 
   .quota-overview-state {
@@ -870,60 +872,171 @@ body {
     margin-left: 0;
   }
 
-  .quota-overview-windows {
+  .quota-overview-content {
     display: grid;
     gap: 0.55rem;
-    margin-top: 0.25rem;
+    justify-items: center;
+    margin-top: 0.65rem;
   }
 
-  .quota-overview-window {
-    padding: 0.55rem 0.65rem;
-    border: 1px solid color-mix(in oklab, var(--border) 76%, transparent);
-    border-radius: 0.75rem;
-    background: color-mix(in oklab, var(--surface-inset) 70%, transparent);
+  [data-quota-role='primary'] {
+    --quota-start: var(--quota-primary-start);
+    --quota-end: var(--quota-primary-end);
+    --quota-track: var(--quota-primary-track);
+    --quota-label: var(--quota-primary-label);
   }
 
-  .quota-overview-window-heading,
-  .quota-overview-window-meta {
+  [data-quota-role='secondary'] {
+    --quota-start: var(--quota-secondary-start);
+    --quota-end: var(--quota-secondary-end);
+    --quota-track: var(--quota-secondary-track);
+    --quota-label: var(--quota-secondary-label);
+  }
+
+  .quota-overview-rings {
+    position: relative;
+    width: var(--quota-stage-size);
+    height: var(--quota-stage-size);
+  }
+
+  .quota-overview-ring {
+    position: relative;
+    flex: 0 0 auto;
+    width: var(--quota-ring-size);
+    height: var(--quota-ring-size);
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 var(--quota-ring-stroke) var(--quota-track);
+  }
+
+  .quota-overview-rings > .quota-overview-ring,
+  .quota-overview-readouts {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .quota-overview-ring-fill {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: conic-gradient(var(--quota-start) 0deg, var(--quota-end) var(--quota-ring-angle),
+      transparent var(--quota-ring-angle));
+    mask-image: radial-gradient(farthest-side, transparent calc(100% - var(--quota-ring-stroke)),
+      #000 calc(100% - var(--quota-ring-stroke)));
+  }
+
+  .quota-overview-ring-cap {
+    position: absolute;
+    width: var(--quota-ring-stroke);
+    height: var(--quota-ring-stroke);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .quota-overview-ring-cap-start {
+    top: calc(var(--quota-ring-stroke) / 2);
+    left: 50%;
+    background: var(--quota-start);
+  }
+
+  .quota-overview-ring-cap-end {
+    top: var(--quota-cap-y);
+    left: var(--quota-cap-x);
+    background: var(--quota-end);
+  }
+
+  .quota-flow-particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .quota-flow-dot {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--flow-size);
+    height: var(--flow-size);
+    offset-path: var(--flow-path);
+    offset-anchor: 50% 50%;
+    border-radius: 50%;
+    background: var(--data-flow-particle);
+    opacity: 0;
+    animation: quota-flow var(--flow-duration) linear var(--flow-delay) infinite;
+  }
+
+  .quota-overview-readouts {
+    display: grid;
+    align-content: center;
+    gap: 0.25rem;
+    width: var(--quota-center-size);
+    height: var(--quota-center-size);
+    border-radius: 50%;
+    background: var(--surface-inset);
+    pointer-events: none;
+  }
+
+  .quota-overview-readout {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.25rem;
+    color: var(--quota-label);
+    line-height: 1.2;
   }
 
-  .quota-overview-window-heading {
-    color: var(--text-secondary);
-    font-size: 0.64rem;
+  .quota-overview-readout span {
+    font-size: 0.625rem;
+    font-weight: 650;
   }
 
-  .quota-overview-window-heading strong {
-    color: var(--text-primary);
-    font-size: 0.7rem;
+  .quota-overview-readout strong {
+    font-size: 1rem;
+    font-weight: 750;
     font-variant-numeric: tabular-nums;
   }
 
-  .quota-overview-track {
-    height: 0.42rem;
-    margin-top: 0.42rem;
-    overflow: hidden;
-    border: 1px solid color-mix(in oklab, var(--border) 72%, transparent);
-    border-radius: 999px;
-    background: color-mix(in oklab, var(--surface) 86%, var(--text-tertiary));
+  .quota-overview-rings[data-topology='single'] .quota-overview-readout {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
   }
 
-  .quota-overview-fill {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
-    background: linear-gradient(90deg, var(--quota-primary-start), var(--quota-primary-end));
-    box-shadow: 0 4px 14px -8px color-mix(in oklab, var(--accent) 70%, transparent);
-    transition: width 180ms ease;
+  .quota-overview-rings[data-topology='single'] .quota-overview-readout strong {
+    font-size: 1.8rem;
   }
 
-  .quota-overview-window-meta {
-    margin-top: 0.35rem;
-    color: var(--text-tertiary);
-    font-size: 0.58rem;
+  .quota-overview-resets {
+    display: grid;
+    gap: 0.35rem;
+    width: 100%;
+    font-size: 0.625rem;
+  }
+
+  .quota-overview-reset,
+  .quota-overview-reset-time,
+  .quota-overview-extra {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .quota-overview-reset {
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .quota-overview-reset-label,
+  .quota-overview-extra {
+    color: var(--quota-label);
+    font-variant-numeric: tabular-nums;
+    font-weight: 650;
+  }
+
+  .quota-overview-reset-time {
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
   }
 
   .usage-panel-heading {
@@ -1107,19 +1220,25 @@ body {
     gap: 0.8rem;
   }
 
-  .inference-period-switcher {
+  .inference-period-switcher,
+  .leadership-period-switcher {
     display: inline-flex;
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 0.32rem;
   }
 
-  .inference-period-switcher button {
+  .inference-period-switcher button,
+  .leadership-period-switcher button {
     min-height: 1.9rem;
     padding: 0.3rem 0.65rem;
     border-radius: 999px;
     font-size: 0.68rem;
     font-weight: 700;
+  }
+
+  .leadership-period-switcher {
+    justify-content: flex-start;
   }
 
   .inference-help {
@@ -1462,7 +1581,7 @@ body {
 
 @media (min-width: 930px) {
   .dashboard-home-overview {
-    grid-template-columns: minmax(154px, 0.72fr) minmax(154px, 0.72fr) minmax(0, 2.1fr);
+    grid-template-columns: minmax(200px, 0.72fr) minmax(200px, 0.72fr) minmax(0, 2.1fr);
     grid-template-areas: "command quota metrics" "command quota month";
     align-items: stretch;
   }
@@ -1479,6 +1598,22 @@ body {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+}
+
+@keyframes quota-flow {
+  0% { offset-distance: 0%; opacity: 0; }
+  8% { opacity: var(--flow-opacity); }
+  88% { opacity: var(--flow-opacity); }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+@keyframes leadership-orbit {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes leadership-breath {
+  0%, 100% { opacity: 0.06; }
+  50% { opacity: 0.32; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -29,6 +29,8 @@ GitHub 上已有用户多次请求 Windows 版本：
 - 不直接在当前 Swift/Cocoa 仓库里硬塞 Windows 兼容代码。
 - 不改变 AI 领导力评分模型 v1.3 的算法语义。
 
+Windows Leadership 的 Codex 来源分类沿用 macOS 语义（忽略大小写）：`subagent` 为子 Agent，`automation` 为自动化，其他值及缺失来源均为主 Agent，包括 `user`、`agent_created_thread`。来源类别不决定时间证据是否可计分；仍要求有效的任务起止记录、创建时间边界和未来时间校验，沿用 worker 去重、周期聚合及评分公式。今日轨道节点使用今日去重 Agent 数，绘图最多 12 个，实际统计不截断。
+
 ---
 
 ## 二、核心判断：架构可复用，平台绑定层必须重写
