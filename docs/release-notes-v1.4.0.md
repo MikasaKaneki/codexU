@@ -12,7 +12,7 @@ codexU v1.4.0 统一两平台模型定价，并在 Windows 改进历史刷新、
 
 ## 冻结候选
 
-版本 1.4.0，macOS build 30。四个安装包均来自源码 `51e03cc5905a897a6d409f1778ed0f4e81938aea`，由[双平台构建与安装验收任务 38654065193](https://github.com/shanggqm/codexU/actions/runs/38654065193)产出。Windows 程序 SHA-256：`671cfca8363e07e87b96d11c262bca3bd33b1ec1d00fae58541331d2b1518ddf`。
+版本 1.4.0，macOS build 30。四个安装包均来自源码 `613b835f6d17cd23f4afba6510b5ac79915931c0`，由[双平台构建与安装验收任务 38657403531](https://github.com/shanggqm/codexU/actions/runs/38657403531)产出。Windows 程序 SHA-256：`a572051db0c0e513dbfbaa7f6e63a7934a7657c004ad1d6ad87a7b92a8ad1356`。
 
 本次最终验收及发布必须复用这批冻结文件，不用 tag 触发的重建包替换已验收字节。
 
@@ -23,7 +23,7 @@ codexU v1.4.0 统一两平台模型定价，并在 Windows 改进历史刷新、
 - 本地受影响前端构建、37 项合同与 10 项 Playwright 场景通过，覆盖八个表面及中英文、浅深色、空与非空任务栏目。未受栏目标签修改影响的额度/领导力检查复用精确上一候选证据，不将测试数相加为新组合结果。
 - 解包核对新 MSI/NSIS 的版本、x64/AMD64 架构和相同程序 SHA-256；运行新包内程序，使用独立设置和缓存验证真实本地额度、完整历史、栏目中文、三个周期、手动刷新、重启和正常退出，PASS。本机未执行安装；实际程序验证使用独立设置和缓存。
 - 四个安装包和四份 checksum 汇总核对 PASS。
-- [冻结包最终门禁任务 38656362151](https://github.com/shanggqm/codexU/actions/runs/38656362151)通过，使用原任务的安装包，源码一致性、`make release-check` 和两个安装验收矩阵均 PASS。
+- 冻结包最终元数据门禁待运行；当前记录用于提交真实 checksum 后触发该门禁，尚未创建 release commit、tag 或公开 Release。
 
 ## 签名与边界
 
@@ -32,8 +32,8 @@ Windows MSI/NSIS 为 **NotSigned**，未做 Authenticode 签名。macOS 为 **ad
 ## 安装包与 SHA-256
 
 ```text
-f1bb1d4787d6128d9bb68c50f5e0e720b2e927d8ecf8bcf212d32a47ec96b5ff  codexU-1.4.0-mac-arm64.dmg
-bcc7fe2950e2ad54e7e212695cf65a87190f2a8be9806384ef62632006b66ea7  codexU-1.4.0-mac-x86_64.dmg
-9a0eab17adfbe821a8207ccd2486b454b2ca951b5aa902956c994bb3fc151f69  codexU-1.4.0-windows-x86_64.msi
-89beda76138aa85646372eb92bd48eab327feb99c8ae4932dae1f3bf0d43852f  codexU-1.4.0-windows-x86_64-setup.exe
+20ed287256033ec020ec7ef3c9ffd0c2e945f6513314063b942c75a1cd17b1b1  codexU-1.4.0-mac-arm64.dmg
+0f58b6957294e9190df38960eb14d49b49bcae2d5fa9f4153ab11f9ac4d6a209  codexU-1.4.0-mac-x86_64.dmg
+67a63670b455271abfdd8e1c39cb29ef95a4b6b86d7dd24d12f9047a081f02a8  codexU-1.4.0-windows-x86_64.msi
+3c92332a2c7cf56f9f0cfe910e6b7b0d626ca1a522dcea6fac6778366c5aaa45  codexU-1.4.0-windows-x86_64-setup.exe
 ```
