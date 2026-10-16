@@ -1,239 +1,98 @@
-# Windows 版本：Phase 4 Dashboard UI（当前）
+# Windows 开发指南
 
-当前 checkout 已包含 Phase 1/2 的本地数据管线和 Phase 4 Dashboard UI：
+[安装与使用](../docs/WINDOWS.md) · [项目主页](../README.md) · [贡献约定](../CONTRIBUTING.md)
 
-- Rust reader 读取本机 Codex transcript、`state_5.sqlite` 和 automation 元数据
-- Tauri IPC、额度状态、用量、推理性能、任务、项目、Skills 和 AI Leadership Dashboard
-- 中英文设置、Light/Dark/System 外观和六套语义 palette catalog
-- Leadership 每日摘要与趋势方向随界面语言切换；中文保留 Agent 术语，并使用“AI 工时”“峰值并发”和“上升/下降”。
-- 首页按 macOS 的单环或同心双环展示剩余额度，沿弧流光带点状拖尾；颜色标识额度窗口，环下保留重置时间，第三个返回窗口单独展示
-- 正常额度不常驻“官方”成功胶囊，悬停额度标题可查看来源；旧值标为“上次结果”，读取与失败仍明确提示。
-- Leadership 指挥半径按等级显示一至三层轨道、今日 Agent 节点及呼吸光晕；仅窗口活动且图形可见时挂载动画，失焦、隐藏、减少动态效果或 Windows 系统省电时移除动画
-- Windows 原生 exact-HWND、后台不抢前台的视觉采集 workflow
+`windows/` 是 codexU 的 Tauri + Rust 适配实现，前端使用 React/Vite，覆盖 macOS 版中 Codex 相关功能的子集。目前不支持 Claude Code。欢迎贡献 Codex 相关功能的 Windows 适配。
 
-## Windows Dashboard showcase
-
-![codexU Windows AI Leadership dashboard](../docs/windows-port/showcase/assets/windows-glass-light-default-overview.png)
-
-这是一张当前 Windows Web 实现的 AI Leadership 截图：Light 主题、default palette、
-Playwright viewport `1440×900`。画面只展示聚合指标和领导力界面，不包含任务标题、项目名或本机路径。
-它用于展示当前 Dashboard 的信息层级和玻璃表面，不作为真实 Tauri HWND、DPI、窗口层级或原生透明
-路径的验收证据。
-
-任务快照读取并展示：
-
-- 线程标题、项目路径、模型、归档状态、Git 信息
-- SQLite 读取失败时自动降级为 JSONL-only
-- 标题优先使用 `title`，为空时回退到 `preview`，展示前归一化并截断到 48 个字符
-- 工作区只展示路径尾名，automation 优先使用配置中的 `name`
-
-### 历史读取与完整结果
-
-历史逐文件读取、更新缓存，不要求所有追加日志在整轮读取期间保持静止。已写完整的记录正常统计，
-EOF 尚未写完的 JSON 尾部等待下一轮补读；完整 JSON 即使没有换行也可以统计，随后追加不会重复计数。
-历史文件或目录暂时不可读，或完整记录损坏时，本轮读取不会作为有效历史发布，
-也不会把失败产生的空摘要写进有效缓存。应用保留同一数据来源的上次有效累计、
-明细和 AI Leadership，并提示刷新重试；解锁后无需再次修改日志即可重新读取。
-
-首次读取失败时历史标为暂不可用，额度和任务仍可独立更新；可确认的空来源仍显示暂无数据。切换数据来源或主动清缓存后，
-不恢复前一个来源的历史。成功完整重读可以更新为较小的累计值。历史事实和每日归档在 SQLite
-事务中提交，完整发布点不会因失败提前推进；推理缓存仍以临时文件写完后原子替换。
-这些缓存是可重建的派生数据，不修改原始日志。
-
-包含图片或大段工具返回的合法超长 JSONL 记录会流式校验，正文与图片数据不会进入统计内存。
-统计所需字段继续遵守 4 MiB 预算；损坏的完整超长记录仍阻止本轮发布，未写完的尾部随后补读，
-不会因为略过大段正文而漏掉后续用量事件。
-
-退出重开先恢复同来源的有界首页摘要，并明确显示旧值状态；完整历史完成后替换摘要与明细。
-仍保留既有的 state SQLite 不可用时 JSONL-only 口径与来源提示。
-
-### 启动摘要与独立刷新
-
-官方额度、任务元数据和完整历史分别读取，完成一项就发布该项。额度慢或失败不会阻止任务与
-历史更新，历史慢或失败也不会阻止其他两项。首页为每项显示等待、读取、更新或失败状态；
-有同来源完整旧值时继续显示旧值，没有数据时显示不可用或暂无记录，不伪造 0。
-
-`history-summary.json` 位于 app data，读取上限 256 KiB，只保存固定的用量摘要与领导力汇总，
-不保存官方额度、任务正文、线程标题、项目路径、prompt、回复或工具参数。摘要是旧值，不作为
-有效新读取；明细、排行、趋势和推理等待完整历史。来源根、缓存根或统计时区不匹配时不恢复，
-切换来源和清缓存会使摘要失效。写入失败单独提示，不把完整的内存结果丢掉。
-
-三个分支共用一次刷新周期，每项更新保留其他项已有值；重复点击不会启动重叠周期。来源世代
-变化后旧请求不再发布，前端按递增修订号拒绝迟到的旧响应。事件订阅完成后读取首次状态，
-后续事件只取当前状态，不触发刷新循环；周期查询由 backend 的配置 TTL 限制实际采样。
-
-隔离验收页面位于 `web/tests/refresh-harness.html`，需要显式启动 ignored Rust
-`live_refresh_harness` 及对应 loopback Vite 服务。它运行真实 AppState 和历史/任务读取器，
-仅替换 IPC 传输并注入模拟额度、延迟与故障；测试不会访问真实账户或启动原生窗口。
-
-### 增量历史与每日归档
-
-Windows 使用 `codex/history-index.sqlite` 保存安全派生事实、逐来源检查点和按统计时区生成的
-每日归档。没有变化的日志不重新解析；追加从已提交的完整行检查点续读，未结束的尾行保留为
-待补全状态。文件截断、同大小改写或原子替换会重建该来源。检查点分批提交，程序中断后可续接，
-只有本轮清单全部读完并通过来源核验才更新完整发布点。
-
-增量路径使用文件身份、大小/mtime，以及有界的文件头和检查点边界摘要；不会在每次追加时
-扫描全部旧字节。任意内部改写与追加同时发生时，使用明确的完整性扫描核验原始日志：
-
-```powershell
-.\target\release\codexu-probe.exe --verify-history-index --codex-root "<data-root>" --cache-dir "<cache-root>" --summary
-```
-
-原有整包 JSON 摘要缓存路径已退出，SQLite 索引可从原始日志重建。计数器区分累计与增量，
-支持同一 turn 多次调用，cached input 属于 input 子集；相同逻辑会话的 live/archive 复制与明确
-fork 的公共 token 前缀不重复计费。普通 runtime spawn 父子关系不视作复制历史。每日、月度、
-趋势和归档使用相同统计时区，包括 DST 日界。
-
-资源边界：主库页上限 256 MiB，受管理的索引及旁文件预算 1 GiB，事实物化上限 500,000 条，
-每来源未完成任务上限 1,024 个。超限、索引占用或写入失败明确返回状态并保留同来源的完整值；
-不会清理原始日志。每日旧归档以每批最多 256 行回收，保留当前和上一完整发布版本；SQLite
-读事务仍在使用的快照会阻止删除提交。索引页可重用，不为每次回收做整库压缩。
-
-```powershell
-# 定向回归
-cargo test -p codexu-core --test incremental_history
-# 显式的 500 来源 / 50,000 事件 Release 探针（默认 suite 不自动运行）
-cargo test --release -p codexu-core --test incremental_history_scale -- --ignored --nocapture --test-threads=1
-```
-
-## 安装（推荐）
-
-Windows 用户可以直接打开[v1.4.0 Release](https://github.com/shanggqm/codexU/releases/tag/v1.4.0)，在
-Assets 中下载带有 `-setup.exe` 后缀的 NSIS 安装包：
-
-1. 下载 `codexU-<version>-windows-x86_64-setup.exe`。
-2. 双击安装包并按向导完成安装；它使用当前用户安装，不需要管理员权限。
-3. 从开始菜单或安装目录启动 `codexU`。
-
-Release 页面同时提供 MSI 安装包和对应的 `.sha256` 文件。需要通过 Windows Installer 管理安装时选择 MSI；
-需要快速完成当前用户安装时，优先选择 NSIS 安装包。仓库默认发布包尚未进行代码签名，Windows 首次运行时
-可能显示安全提示。
-
-## 快速开始
-
-Windows 工作区使用 Node.js 22.12 或更新版本和 MSVC ABI。首次在当前检出目录开发时，
-安装并设置项目级 toolchain override：
-
-```powershell
-rustup toolchain install stable-x86_64-pc-windows-msvc --profile minimal --component rustfmt
-rustup override set stable-x86_64-pc-windows-msvc
-```
-
-该 override 只作用于当前 `windows/` 目录，不修改全局默认 toolchain。仓库不提交
-`rust-toolchain.toml`，因为只写版本号时，rustup 会沿用用户的 default host，在配置为
-GNU 的 Windows 环境中意外选择 GNU ABI，并额外要求系统提供 `dlltool.exe`。
-
-Windows release 构建会先更新 stable MSVC toolchain，再执行格式检查、测试和打包。
-
-```powershell
-cd windows
-cargo build --release
-
-# 使用默认路径（~/.codex/state_5.sqlite）
-$env:RUST_LOG="info"
-.\target\release\codexu-probe.exe --summary
-
-# 指定 Codex 数据根
-.\target\release\codexu-probe.exe --codex-root "$env:USERPROFILE\.codex" --summary
-```
-
-## 验证
-
-```powershell
-# Rust workspace tests
-cargo +stable-x86_64-pc-windows-msvc test --workspace
-```
-
-### Web 验证
-
-默认 Playwright 运行使用仓库内的合成 fixture，因此在没有本机 Codex 历史的干净 runner 上也可复现。
-只有显式设置 `CODEXU_VISUAL_LIVE=1` 时，才以只读方式加载当前机器的本地聚合数据；两种模式的截图和
-manifest 都只写入 Git 忽略的 `.local-artifacts/`。
-
-```powershell
-cd windows\apps\codexu-tauri\web
-npm ci
-npm run build
-npm run test:contracts
-npm run test:visual
-
-# 可选：以本机只读数据复核单个 surface
-$env:CODEXU_VISUAL_LIVE="1"
-$env:CODEXU_VISUAL_SURFACE="inference"
-npm run test:visual
-Remove-Item Env:CODEXU_VISUAL_LIVE, Env:CODEXU_VISUAL_SURFACE
-```
-
-### 原生视觉验收
-
-Dashboard 的正式 Windows 本机采集入口会构建真实 Tauri release 应用，并执行一次
-最大化、exact HWND 的采集运行。Overview 仅采集一个顶部 viewport；Tasks、AI Leadership、
-Usage 与 Skills 使用动态编号的 panel segments；Projects 仅采集一个最大化的首个 viewport。
-采集实例保持最大化，但以 non-activating background tool window 运行：不改变用户当前前台窗口，
-并从任务栏和 Alt-Tab 排除；正常启动 codexU 的窗口行为不变。
-截图、日志和 WebView2 临时数据只写入
-Git 忽略的 `.local-artifacts/`；当前契约不包含额外的 client sizes。
-
-本轮 Windows V0 的原生视觉矩阵与 shell lifecycle 证据在按 build `26200` 归类的 Windows 11
-环境完成；Windows 10 仍是支持目标，但未在本轮实机观测。该说明只描述本轮验收环境，
-不把当前主机结果扩展为跨 OS 结论。
-
-测试分三层：
-
-1. `-PreflightOnly` 只检查依赖、脚本语法、窗口策略和输出边界，不构建、不启动窗口。
-2. `Test-NativeVisualCaptureWorkflow.ps1` 检查采集 workflow 的静态契约，包括最大化、non-activating、保留前台窗口、后台 Z-order、tool window、任务栏/Alt-Tab 排除和精确 capture 参数。
-3. `Test-NativeVisualCaptureCoverage.ps1` 构建并启动真实 Tauri release 应用，覆盖各 Dashboard surface，验证 exact HWND、真实截图、前台窗口未改变和最终进程清理。
-
-```powershell
-cd ..
-
-# 不启动 app 的快速检查
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\windows\scripts\Capture-NativeVisuals.ps1 -PreflightOnly
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\windows\scripts\tests\Test-NativeVisualCaptureWorkflow.ps1
-
-# 真实窗口覆盖测试（会构建、启动、截图并清理）
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\windows\scripts\tests\Test-NativeVisualCaptureCoverage.ps1
-
-# 正式采集
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\windows\scripts\Capture-NativeVisuals.ps1
-
-# 只采集 Skills 的聚焦运行
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\windows\scripts\Capture-NativeVisuals.ps1 -Surface Skills
-```
-
-Coverage 运行速度不是当前验收重点；重点是它不会抢焦点或覆盖用户正在使用的窗口。运行边界、DPI 说明、精确 PID 清理规则和人工验收清单见
-[`docs/windows-port/WINDOWS_NATIVE_VISUAL_WORKFLOW.md`](../docs/windows-port/WINDOWS_NATIVE_VISUAL_WORKFLOW.md)。
+本文面向开发者，介绍工程结构、环境配置、本地运行、验证和打包入口。下载安装包请看[Windows 使用说明](../docs/WINDOWS.md)。
 
 ## 工程结构
 
 ```text
 windows/
-├── Cargo.toml
-├── README.md
-└── crates/
-    ├── codexu-core/
-    │   ├── Cargo.toml
-    │   └── src/
-    │       ├── lib.rs
-    │       ├── models/
-    │       │   ├── mod.rs
-    │       │   ├── usage.rs
-    │       │   ├── runtime.rs
-    │       │   └── leadership.rs
-    │       └── readers/
-    │           ├── mod.rs
-    │           ├── common.rs              ← 聚合、缓存、成本估算
-    │           ├── codex_state.rs         ← 新增：state_5.sqlite 读取
-    │           ├── codex_transcript.rs    ← Codex JSONL + 元数据富化
-    │           └── claude_transcript.rs   ← Claude Code JSONL（保留，待激活）
-    └── codexu-cli/
-        ├── Cargo.toml
-        └── src/
-            └── main.rs                    ← CLI 入口
+├── Cargo.toml                        # Rust workspace
+├── apps/codexu-tauri/
+│   ├── src-tauri/                    # 桌面窗口、IPC、刷新调度与应用配置
+│   └── web/                          # React/Vite Dashboard 与前端测试
+├── crates/
+│   ├── codexu-core/                  # Codex 数据读取、统计与缓存
+│   └── codexu-cli/                   # codexu-probe 数据探针
+└── scripts/                         # Windows 验证与原生视觉采集脚本
 ```
 
-## 后续开发方向
+## 开发环境
 
-1. 扩展 Windows 10 与不同 DPI 环境下的原生视觉验证。
-2. 逐项处理布局、数据边界、安装体验和验收证据等其他差异。
+需要 Windows、MSVC 构建工具及 Windows SDK、Rust/rustup、Node.js 22.12 或更新版本和 npm。运行桌面应用需要 WebView2 Runtime。
+
+以下命令从仓库根目录运行。Rust override 设置在 `windows/`，不改变全局默认 toolchain；Tauri CLI 版本与仓库发布脚本一致。
+
+```powershell
+rustup toolchain install stable-x86_64-pc-windows-msvc --profile minimal --component rustfmt
+Push-Location windows
+rustup override set stable-x86_64-pc-windows-msvc
+cargo +stable-x86_64-pc-windows-msvc install tauri-cli --version 2.6.2 --locked
+Pop-Location
+
+npm --prefix windows/apps/codexu-tauri/web ci
+```
+
+## 本地运行
+
+### 桌面应用
+
+从仓库根目录运行：
+
+```powershell
+Push-Location windows/apps/codexu-tauri
+cargo +stable-x86_64-pc-windows-msvc tauri dev
+Pop-Location
+```
+
+Tauri 配置中的开发钩子会启动 Vite。该模式读取本机 Codex 数据；修改读取或刷新逻辑时，应注意保留原始日志和账户状态。
+
+### 数据探针
+
+只检查数据读取时，可以构建 CLI，无需启动桌面窗口。从仓库根目录运行：
+
+```powershell
+cargo +stable-x86_64-pc-windows-msvc build --release --manifest-path windows/Cargo.toml -p codexu-cli
+$env:RUST_LOG="info"
+.\windows\target\release\codexu-probe.exe --codex-root "$env:USERPROFILE\.codex" --summary
+```
+
+## 验证
+
+### Rust 与前端
+
+从仓库根目录运行：
+
+```powershell
+cargo +stable-x86_64-pc-windows-msvc test --manifest-path windows/Cargo.toml --workspace
+npm --prefix windows/apps/codexu-tauri/web run build
+npm --prefix windows/apps/codexu-tauri/web run test:contracts
+npm --prefix windows/apps/codexu-tauri/web run test:visual
+```
+
+常规 Dashboard UI 改动使用 Playwright 验证。默认运行使用合成 fixture，可在没有本机 Codex 历史的 runner 上复现。截图和 manifest 写入 Git 忽略的 `.local-artifacts/`。
+
+需要以本机只读聚合数据复核时，从仓库根目录运行：
+
+```powershell
+$env:CODEXU_VISUAL_LIVE="1"
+$env:CODEXU_VISUAL_SURFACE="inference"
+try {
+    npm --prefix windows/apps/codexu-tauri/web run test:visual
+} finally {
+    Remove-Item Env:CODEXU_VISUAL_LIVE, Env:CODEXU_VISUAL_SURFACE
+}
+```
+
+### 原生窗口验证
+
+需要验证真实 Tauri 窗口、HWND、DPI 或窗口层级时，使用[Windows 原生视觉工作流](../docs/windows-port/WINDOWS_NATIVE_VISUAL_WORKFLOW.md)。采集实例必须保持最大化、non-activating，并保留用户当前前台窗口；截图、日志和临时数据留在 `.local-artifacts/`。
+
+原生验证与 Playwright 的前端验证分别记录，不相互替代。开发和验证只能清理本任务启动并确认归属的进程。
+
+## 安装包构建
+
+[分发说明](../DISTRIBUTION.md)介绍 MSI/NSIS 构建、校验和签名边界；仓库入口是 [`scripts/build-windows-release.ps1`](../scripts/build-windows-release.ps1)。发布使用项目的发布流程，不在日常开发中修改版本号。

@@ -1,10 +1,12 @@
 # codexU
 
+codexU 是一个使用 Swift 构建的 macOS 菜单栏与桌面应用，用来查看 OpenAI Codex / ChatGPT Codex 和 Claude Code 的额度窗口、token 用量、今日任务和本机 AI 领导力。它把常用信息放在菜单栏和主窗口里，帮助你快速判断剩余额度、重置时间、当天工作进展，以及一个人正在调动多少 AI 劳动力。
+
+项目另提供基于 Tauri + Rust 的 [Windows 适配版](docs/WINDOWS.md)，覆盖 macOS 版中 Codex 相关功能的子集。下文功能与操作说明以 macOS 版为主。
+
 ![codexU v1.2.0 AI 领导力评估模型](docs/screenshot-v1.2.0-ai-leadership.png)
 
 ## 全网首推：AI 领导力评估模型
-
-codexU v1.4.0 同步提供 macOS 和 Windows 安装包，两平台共享本地模型定价与按回合模型归因。Windows 修复活跃历史刷新和额度读取导致的磁盘增长，并精简 Dashboard 文案；所有用量和任务数据仍在本机处理。
 
 - **一眼看懂 AI 组织规模**：主视觉同时展示领导力得分、28 天领导 Agent 数、AI 工时和峰值并发；轨道节点随今日 Agent 动态运行。
 - **不是靠 token 刷分**：只使用本机可验证或可推导的 Agent 生命周期、父子关系、并发与自主运行证据；不可靠的成本、交付和估算区间不进入得分。
@@ -12,27 +14,7 @@ codexU v1.4.0 同步提供 macOS 和 Windows 安装包，两平台共享本地�
 - **从“碳基牛马”到“人类最强者”**：七级徽章、固定 0–100 等级进度与指挥半径动效，让得分既可解释，也有鲜明的个人成长标识。
 - **本地优先、隐私优先**：评分全程在 Mac 本机完成，不上传 usage、线程、路径、日志或账户数据。
 
-> [!IMPORTANT]
-> **建议升级到 v1.4.0。** 本版统一两平台模型定价，并包含 Windows 活跃历史刷新及额度读取磁盘增长修复。[下载最新版本](https://github.com/shanggqm/codexU/releases/latest)。
-
 [产品官网](https://shanggqm.github.io/codexU-site/) · [下载最新版本](https://github.com/shanggqm/codexU/releases/latest) · [English](README.en.md)
-
-codexU 是一个 macOS 菜单栏与桌面应用，用来查看 OpenAI Codex / ChatGPT Codex 和 Claude Code 的额度窗口、token 用量、今日任务和本机 AI 领导力。它把常用信息放在菜单栏和主窗口里，帮助你快速判断剩余额度、重置时间、当天工作进展，以及一个人正在调动多少 AI 劳动力。
-
-## Windows 版本已发布
-
-当前 Windows x86_64 桌面版本随 [GitHub v1.4.0 Release](https://github.com/shanggqm/codexU/releases/tag/v1.4.0) 与 macOS 一起提供，并包含完整的独立 Tauri Dashboard；安装包提供 MSI 与 NSIS 两种方式：
-
-- `codexU-1.4.0-windows-x86_64.msi`：适合通过 Windows Installer 安装。
-- `codexU-1.4.0-windows-x86_64-setup.exe`：适合通过 NSIS 安装向导安装。
-- 支持 Windows 10/11 x86_64；Windows ARM64 当前尚未打包。
-- 验证环境说明：本轮 Windows V0 的原生视觉矩阵与 shell lifecycle 验收在按 build `26200` 归类的 Windows 11 环境完成；Windows 10 仍是支持目标，但未在本轮实机观测。
-- Windows 版本读取 `%USERPROFILE%\.codex\` 等本机数据，保持本地优先和隐私边界，不上传 usage、线程、路径、日志或账户数据。
-- Windows 版本当前只支持 Codex，暂不支持 Claude Code。
-
-Windows v1.4.0 在持续追加历史时按文件更新统计、随后补读未完成尾部；合法大图片和工具记录采用流式处理。共享定价按每回合记录的模型及服务档位计价，Dashboard 使用 `≈` 标识金额估算，减少逐行重复说明。新增剩余额度环与领导力轨道动效，修复有效主 Agent 漏计，并支持今日、近 7 天和近 28 天的完整领导力详情。本次同时提供 macOS 双架构安装包。
-
-Windows 版本是独立的 Tauri 桌面实现，当前发布包尚未由仓库默认流程进行代码签名；Windows 可能在首次运行时显示安全提示。Windows 与 macOS 的功能实现仍在分别演进，当前功能覆盖并不完全相同。
 
 ## 界面截图
 
@@ -69,7 +51,7 @@ Windows 版本是独立的 Tauri 桌面实现，当前发布包尚未由仓库�
 - 主界面顶部新增 `Codex | Claude Code` 全局开关，可手动切换所有面板的数据范围。
 - 支持 Claude Code 本机 transcript 用量统计、最近 7 日趋势、项目排行、工具/Skill TOP 和任务看板基础能力。
 - 汇总今日、近 7 天和累计 token 用量，并细分未缓存输入、命中缓存输入和输出。
-- 按 OpenAI API token 价格估算本月 API 等效价值，并在 Plus、Pro 100、Pro 200 和满额月价值之间展示进度刻度。
+- 展示本月用量的 API 等效价值估算与进度。
 - 在顶部概览最左侧用“等级徽章 + 指挥半径轨道”展示滚动 28 天 AI 领导力：徽章固定在圆心，得分、近 28 天领导 Agent、近 28 天 AI 工时和峰值并发使用 2×2 指标矩阵；轨道节点仍按今日 Agent 动态变化。双环紧随其右并保持原尺寸，左上角明确标注“用量”。
 - 下方仪表盘支持今日任务、AI 领导力、用量趋势、项目排行和 Skill 使用视图。AI 领导力始终评估 Codex 与 Claude Code 的合计表现；详情顶部用完整徽章路径展示全部等级节点，分值直接标在进度条上，再以四个核心指标、四维能力、每日 AI 工时/Agent/峰值组合趋势和项目贡献解释得分。
 - 今日任务按事实源自适应组织：Codex 使用“最近活跃、待继续、定时、今日归档”，Claude Code 使用本机 task 的“进行中、待处理、计划中、已完成”；近期活动与归档都不会被包装成仍在执行或成功完成。
@@ -84,26 +66,6 @@ Windows 版本是独立的 Tauri 桌面实现，当前发布包尚未由仓库�
 - 设置窗口支持中文/英文界面、自动/浅色/深色外观、状态栏内容与实时预览、主窗口置顶、关闭行为、系统状态和更新检查配置。
 - 默认自动检查 GitHub Release 新版本并接收 beta 版本，发现新版时提供匹配当前 Mac 架构的 DMG 下载入口；不会静默下载安装，自动检查可关闭。
 - 本地读取数据，不上传 usage、线程或账户数据到第三方服务。
-
-## 羊毛进度
-
-macOS 与 Windows 使用同一份本地模型价格表，包含 GPT-6 系列的缓存读取、缓存写入和服务层级规则。价格缺失时明确标注参考估算；详细来源与缓存重算规则见[共享模型定价](docs/MODEL_PRICING.md)。运行时不请求在线报价。
-
-“羊毛进度”是 codexU 对本月 Codex 使用量的 API 等效价值估算。它把本机解析到的普通输入、cache write、命中缓存输入和输出 token，按对应模型及实际 service tier 的 OpenAI API token 单价折算成美元金额，并和 Plus、Pro 100、Pro 200 以及参考月上限做对比。这个指标解决的问题是：Codex 额度本身通常只显示百分比和重置时间，token 数量也不容易直观看出“用了多少价值”；羊毛进度提供一个统一的金额口径，帮助你判断本月订阅成本大致回收到了哪个区间。
-
-单次 token 用量的估算公式为：
-
-```text
-API 等效价值 =
-  普通未缓存输入 tokens / 1,000,000 * 模型输入单价
-+ cache write tokens / 1,000,000 * 模型 cache write 单价
-+ 缓存输入 tokens / 1,000,000 * 模型缓存输入单价
-+ 输出 tokens / 1,000,000 * 模型输出单价
-```
-
-其中 cache write 和缓存命中都按不超过输入 tokens 的数量计入，避免重复计价。解析到 `service_tier = priority/fast` 时使用官方 Fast mode API 单价；支持长上下文计价的模型在单次输入超过 272K tokens 时使用官方长上下文单价。推理强度不会被额外乘一次，因为 reasoning tokens 已包含在输出 token 中。价格来源以 OpenAI 的[实时 API 定价页](https://developers.openai.com/api/docs/pricing)和对应模型页为准。
-
-本月羊毛进度会累计当月所有本机 session 的 API 等效价值。GPT-5.3-Codex-Spark 仍是 research preview，官方尚未公布最终费率；这类模型及未知模型继续按 GPT-5.5 参考价折算，并用 `≈` 明确标记为参考估算，而不会冒充官方价格。进度条的参考终点使用 `2 亿 tokens/天 * 30 天` 估算，并按 30% 未缓存输入、50% 缓存输入、20% 输出的参考 token mix 折算；当前参考价约为 `$7.75 / 1M tokens`，参考月上限约 `$46,500`。进度条采用分段非线性刻度：Plus / Pro 节点保留在前段，超过 Pro 200 后用对数比例映射到参考终点，因此条宽用于扫视阶段进展，不等同于线性美元占比。该金额只是基于 API 价格的等效估算，不代表实际账单或官方返现金额。
 
 ## 快捷键和操作
 
@@ -132,6 +94,8 @@ codexU 需要读取本机 `~/.codex/` 下的 Codex 数据；如果启用 Claude 
 
 ## 安装
 
+### macOS
+
 从 GitHub Release 下载与你的 Mac 芯片匹配的安装包：
 
 - Apple Silicon：`codexU-<version>-mac-arm64.dmg`
@@ -151,9 +115,15 @@ codexU 需要读取本机 `~/.codex/` 下的 Codex 数据；如果启用 Claude 
 - MSI：`codexU-<version>-windows-x86_64.msi`
 - NSIS：`codexU-<version>-windows-x86_64-setup.exe`
 
-运行安装程序并按向导完成安装。每个安装包旁边都提供对应的 `.sha256` 校验文件；发布包的构建、校验和当前限制见 [DISTRIBUTION.md](DISTRIBUTION.md)。
+两种安装包任选其一，双击后按向导完成安装。安装前请先在本机安装并使用 Codex，以便生成用量数据。
+
+当前 Windows 安装包未进行代码签名，首次运行时可能出现系统安全提示。每个安装包都提供对应的 `.sha256` 校验文件；校验方式见 [DISTRIBUTION.md](DISTRIBUTION.md)。
+
+适配范围与贡献入口见 [Windows 说明](docs/WINDOWS.md)。
 
 ## 运行要求
+
+### macOS
 
 - macOS 13 或更新版本。
 - 本机已安装 Codex。
@@ -164,7 +134,7 @@ codexU 需要读取本机 `~/.codex/` 下的 Codex 数据；如果启用 Claude 
 
 ### Windows
 
-- Windows 10 或更新版本（x86_64）。
+- Windows 10/11（x86_64）；已在 Windows 11 验证，Windows 10 尚未实机验证。
 - 本机已安装 Codex，并且已经生成 `%USERPROFILE%\.codex\` 下的本机数据。
 - Windows 版本当前只支持 Codex；Windows ARM64 当前不在发布范围内。
 
