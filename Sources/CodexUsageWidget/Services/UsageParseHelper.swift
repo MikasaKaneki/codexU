@@ -43,6 +43,7 @@ final class UsageParseHelper {
         let encoded = try JSONEncoder().encode(request)
         guard encoded.count + 1 <= Self.maximumFrame else { throw UsageIndexError.resourceLimited }
         let deadline = ProcessInfo.processInfo.systemUptime + min(max(timeout, 0), 5)
+        var receivedErrorResponse = false
         do {
             try start()
             guard let input, let output, let process else { throw UsageIndexError.resourceLimited }
@@ -69,7 +70,12 @@ final class UsageParseHelper {
                         let frame = try JSONDecoder().decode(UsageParseFrame.self, from: pending.prefix(length))
                         pending.removeSubrange(pending.startIndex...newline)
                         guard frame.id == request.id else { throw UsageIndexError.sourceChanged }
-                        if let error = frame.error { throw UsageIndexError(rawValue: error) ?? .databaseFailure }
+                        if let error = frame.error {
+                            guard frame.end, frame.chunk == nil, response.isEmpty, pending.isEmpty,
+                                  sent == packet.count else { throw UsageIndexError.cacheInvalid }
+                            receivedErrorResponse = true
+                            throw UsageIndexError(rawValue: error) ?? .databaseFailure
+                        }
                         if let chunk = frame.chunk {
                             guard chunk.count <= Self.maximumResponse - response.count else { throw UsageIndexError.resourceLimited }
                             response.append(chunk)
@@ -85,7 +91,10 @@ final class UsageParseHelper {
             }
             throw UsageIndexError.cancelled
         } catch {
-            terminate()
+            // A complete error reply leaves the persistent helper ready for its next request.
+            // Killing it here can make that request hit a still-exiting slot and falsely
+            // report resourceLimited. Transport, framing and timeout failures still discard it.
+            if !receivedErrorResponse { terminate() }
             throw error
         }
     }

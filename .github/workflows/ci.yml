@@ -17,6 +17,8 @@ jobs:
         run: build/codexU.app/Contents/MacOS/codexU --self-test-model-pricing
       - name: Runtime executable detection and fast source tests
         run: build/codexU.app/Contents/MacOS/codexU --self-test-runtime-fast-sources
+      - name: History index regression tests
+        run: build/codexU.app/Contents/MacOS/codexU --self-test-history-index
       - name: Palette package and rendering tests
         run: build/codexU.app/Contents/MacOS/codexU --self-test-palettes
       - name: Menu bar rendering tests

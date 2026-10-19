@@ -76,12 +76,33 @@ enum UsageStreamParserSelfTest {
             let repeated = try helper.parse(UsageParseRequest(id: UUID().uuidString, path: fixture.path,
                 targetEnd: UInt64(fixtureBytes), checkpoint: parsed.batch.checkpoint, previousStamp: parsed.stamp))
             try check(repeated.batch.readBytes == 0 && repeated.batch.deltas.isEmpty)
+            // A source error is a complete reply, not a broken helper. Immediately
+            // follow it with a healthy source without giving a killed child time to exit.
+            for _ in 0..<32 {
+                do {
+                    _ = try helper.parse(UsageParseRequest(id: UUID().uuidString,
+                        path: root.appendingPathComponent("missing.jsonl").path, targetEnd: 0,
+                        checkpoint: CodexIndexCheckpoint(), previousStamp: nil))
+                    throw UsageIndexError.databaseFailure
+                } catch UsageIndexError.sourceChanged {}
+                let recovered = try helper.parse(request)
+                try check(encoder.encode(recovered.batch.deltas) == encoder.encode(whole.deltas))
+            }
+            // Preserve a real child-side resource limit, while keeping its next reply usable.
+            do {
+                _ = try helper.parse(UsageParseRequest(id: String(repeating: "x", count: 129),
+                    path: fixture.path, targetEnd: UInt64(fixtureBytes),
+                    checkpoint: CodexIndexCheckpoint(), previousStamp: nil))
+                throw UsageIndexError.databaseFailure
+            } catch UsageIndexError.resourceLimited {}
+            let afterLimit = try helper.parse(request)
+            try check(encoder.encode(afterLimit.batch.deltas) == encoder.encode(whole.deltas))
             let frozen = root.appendingPathComponent("frozen.jsonl")
             try Data("first\npart".utf8).write(to: frozen)
             try check(UsageFileStamp.completingBoundary(url: frozen, frozenEnd: 10) == nil)
             try Data("first\npartial\nnewer\n".utf8).write(to: frozen)
             try check(UsageFileStamp.completingBoundary(url: frozen, frozenEnd: 10) == 14)
-            print("history stream: complete-line restart, half-line, long/oversized line progress, checkpoint counter parity passed")
+            print("history stream: complete-line restart, half-line, long/oversized line progress, checkpoint counter parity, helper recovery after source/resource errors passed")
             return true
         } catch {
             print("history stream failed: \(error)")
