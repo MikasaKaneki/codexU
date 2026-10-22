@@ -1,3 +1,4 @@
+
 import CryptoKit
 import Foundation
 
@@ -86,7 +87,18 @@ final class UsageIndexWorker {
                 createdAt: source.createdAt, sourceKind: source.sourceKind, workerParentID: source.workerParentID,
                 automationID: source.automationID), now: Date())
             try materializers[source.runtime]?.enqueue(id)
-            try store.enqueueDiscoveredSource(id, priority: source.updatedAt >= Int64(Date().timeIntervalSince1970 - 7 * 86400) ? 1 : 2, now: Date())
+            let now = Date()
+            if FileManager.default.fileExists(atPath: source.locator) {
+                try store.enqueueDiscoveredSource(id, priority: source.updatedAt >= Int64(now.timeIntervalSince1970 - 7 * 86400) ? 1 : 2, now: now)
+            } else {
+                // Codex can retain thread rows after their rollout files have been removed.
+                // Treat those sources as missing instead of retrying sourceChanged forever.
+                try store.observeSource(source: id, identity: "", targetEnd: 0, status: "missing", now: now)
+                try store.execute("""
+                    UPDATE job SET status='done',cursor='{}',retry_at_ms=NULL,updated_at_ms=?
+                    WHERE dedup_key=? AND kind='parse'
+                    """, [.integer(try usageIndexMilliseconds(now)), .text("parse:" + id)])
+            }
         }
         }
     }
