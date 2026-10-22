@@ -58,6 +58,9 @@ extension UsageIndexStore {
                 for sourceRow in sources {
                     guard let source = sourceRow[0].text else { throw UsageIndexError.cacheInvalid }
                     cursor.source = source
+                    let observationStatus = try rows("SELECT status FROM source_observation WHERE source_id=? AND revision_id<=? ORDER BY revision_id DESC LIMIT 1",
+                        [.text(source), .integer(cut)], limit: 1).first?.first?.text
+                    let confirmedMissing = observationStatus == "missing"
                     // Match the latest checkpoint and metadata at this fixed cut. A previous complete
                     // projection must not hide an unprojected append or an empty replacement generation.
                     let candidates = try rows("""
@@ -76,10 +79,18 @@ extension UsageIndexStore {
                     let ownerRevision = runtime == "claude-code" ? try claudeOwnershipRevision(source: source, at: cut) : 0
                     if let projection = candidates.first?.first?.text, (candidates.first?[1].integer ?? 0) >= ownerRevision,
                        try dependencyIsValidAt(source: source, revision: cut),
-                       try observationIsCovered(source: source, revision: cut) {
+                       try archiveObservationIsCovered(source: source, revision: cut) {
                         try execute("INSERT INTO build_member(build_id,source_id,projection_id) VALUES (?,?,?)",
                             [.text(build), .text(source), .text(projection)])
-                    } else { cursor.missingSources += 1 }
+                    } else if confirmedMissing {
+                        let facts = try scalar("SELECT count(*) FROM fact WHERE source_id=? AND commit_revision<=?",
+                            [.text(source), .integer(cut)]) ?? 0
+                        // Empty stale inventory rows have nothing left to index. Keep the report
+                        // partial only when a missing source still has indexed facts to preserve.
+                        if facts > 0 { cursor.missingSources += 1 }
+                    } else {
+                        cursor.missingSources += 1
+                    }
                 }
                 if sources.isEmpty { cursor.stage = "days" }
             } else {
@@ -158,6 +169,35 @@ extension UsageIndexStore {
                         [.text(String(decoding: data, as: UTF8.self)), .integer(try usageIndexMilliseconds(now)), .text(build)])
             return false
         }
+    }
+}
+
+extension UsageIndexStore {
+    private func archiveObservationIsCovered(source: String, revision: Int64) throws -> Bool {
+        guard let latest = try rows("SELECT file_identity,target_end,status FROM source_observation WHERE source_id=? AND revision_id<=? ORDER BY revision_id DESC LIMIT 1",
+                                    [.text(source), .integer(revision)], limit: 1).first else { return false }
+        let observation: [UsageSQLValue]?
+        if latest[2].text == "missing" {
+            let previous = try rows("""
+                SELECT file_identity,target_end,status FROM source_observation
+                WHERE source_id=? AND revision_id<=? AND status<>'missing'
+                ORDER BY revision_id DESC LIMIT 1
+                """, [.text(source), .integer(revision)], limit: 1).first
+            guard previous?[2].text == "readable" else { return false }
+            observation = previous
+        } else {
+            guard latest[2].text == "readable" else { return false }
+            observation = latest
+        }
+        guard let observation,
+              let generation = try rows("""
+                SELECT g.file_identity,c.complete_offset FROM source_generation g
+                JOIN checkpoint_version c ON c.source_id=g.source_id AND c.generation=g.generation
+                WHERE g.source_id=? AND g.valid_from<=? AND (g.valid_to IS NULL OR g.valid_to>?)
+                AND c.revision_id<=? ORDER BY c.revision_id DESC LIMIT 1
+                """, [.text(source), .integer(revision), .integer(revision), .integer(revision)], limit: 1).first,
+              let target = observation[1].integer, let offset = generation[1].integer else { return false }
+        return observation[0] == generation[0] && offset >= target
     }
 }
 
